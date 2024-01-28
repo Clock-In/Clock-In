@@ -1,0 +1,20 @@
+# General python
+venv/
+__pycache__
+# Django-specific
+*.log
+*.pot
+*.pyc
+
+# Docker
+docker/data
+docker/socket
+
+# Misc
+*.bak
+
+# Config
+.env
+
+# Editors
+.vim/
