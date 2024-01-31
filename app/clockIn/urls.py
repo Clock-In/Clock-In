@@ -21,4 +21,5 @@ from base import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('settings/', views.settings, name='settings'),
+    path('timetable/', views.timetable, name='timetable'),
 ]

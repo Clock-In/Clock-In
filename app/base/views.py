@@ -1,5 +1,9 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 
-# Create your views here.
+
 def settings(request):
     return render(request, 'base/settings.html', {})
+
+def timetable(request):
+    return HttpResponse("Placeholder for timetable page")
