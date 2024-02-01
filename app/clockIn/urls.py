@@ -53,6 +53,6 @@ auth_urls = [
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include(auth_urls)),
-
-
+    path('timetable/', views.time_table_page, name="timetable"),
+    
 ]

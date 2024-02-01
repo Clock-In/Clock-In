@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Calendar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .calendar {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #2b23a4;
+      color: white;
+    }
+    td {
+      cursor: pointer;
+    }
+    .selected {
+      background-color: #3498db;
+      color: #fff;
+    }
+    .month-header {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .month-header {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="calendar">
+    <h2 class="month-header" id="month-header">{{month}}</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Sun</th>
+          <th>Mon</th>
+          <th>Tue</th>
+          <th>Wed</th>
+          <th>Thu</th>
+          <th>Fri</th>
+          <th>Sat</th>
+        </tr>
+      </thead>
+      <tbody>
+
+       {% for week in weeks %}
+        <tr>
+          {% for day in week%}
+          <td>{{day.date}}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
