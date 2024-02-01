@@ -9,6 +9,8 @@ if [[ "${DB_HOST:0:1}" != '/' ]]; then
 fi
 echo 'DB started, continuing.'
 
+echo 'Running migrations...'
 python3 manage.py migrate --noinput
 python3 manage.py collectstatic --noinput
+echo 'Starting server...'
 python3 manage.py runserver 0.0.0.0:8000
