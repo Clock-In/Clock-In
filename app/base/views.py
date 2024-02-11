@@ -5,6 +5,8 @@ from django.shortcuts import render
 from datetime import datetime
 import calendar
 
+from .forms import ExtendedCustomUserChangeForm
+
 @login_required
 def profile(request: HttpRequest):
     return render(request, "user/profile.html", {"user": request.user}) # type: ignore
@@ -52,6 +54,13 @@ def time_table_page(request):
 
     return render(request, 'user/timetable.html',{'month':month,'weeks':weeks})
 
+@login_required
 def settings(request):
-    return render(request, 'user/settings.html', {})
+    if request.method == "POST":
+        user_form = ExtendedCustomUserChangeForm(request.POST, instance=request.user)
+        if user_form.is_valid():
+            user_form.save()
+    else:
+        user_form = ExtendedCustomUserChangeForm(instance=request.user)
+    return render(request, 'user/settings.html', {"user": request.user, "user_form": user_form,})
 

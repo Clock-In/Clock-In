@@ -30,6 +30,8 @@ class User(AbstractUser): # Extend default user model
     username = None # We don't really need usernames, email address is enough.
     email = models.EmailField(_('email address'), unique=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True)
+    first_name = models.CharField(_('first name'), max_length=30, blank=False, null=False)
+    last_name = models.CharField(_('last name'), max_length=150, blank=False, null=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

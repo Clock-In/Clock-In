@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User settings</title>
-    <link rel="stylesheet" href="{% static 'base/settings.css' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 </head>
 <body class="bg-light">
@@ -25,28 +24,50 @@
 
                 <h1>Personal Information</h1>
         
-                <h4 class="mb-2">Name</h4>
-                <input type="text" placeholder="{{ user.name }}">
-                <p><small class="text-muted">This is the name that will be listed under any of your scheduled shifts</small></p>
-        
-                <h4 class="mb-2">Email</h4>
-                <input type="email" placeholder="{{ user.email }}">
-                <p><small class="text-muted mb3">Updates and reminders will be sent to this address</small></p>
+                <form method="post" enctype="multipart/form-data" class="mb-3" id="form">
+                    {% csrf_token %}
+                    
+                    <div class="form-content mb-3">
+                        <label for="first_name_input">Name</h4>
+                        {{ user_form.first_name }}      
+                        {{ user_form.last_name }}
+                        <small class="form-text text-muted">This is the name that will be listed under any of your scheduled shifts</small>
+                    </div>
+            
+                    <div class="form-content mb-3">
+                        <label for="email_input">Email</label>
+                        {{ user_form.email }}
+                        <small class="form-text text-muted">Updates and reminders will be sent to this address</small>
+                    </div>
+                    <button type="submit" id="submit_btn" class="btn btn-primary" disabled>Save Changes</button>
+                    <button type="reset" id="reset_btn" class="btn btn-secondary" disabled>Reset</button>                           
+                </form>
         
                 <h1>Privacy and Security</h1>
         
-                <p></p><a href="{% url 'password_change' %}" class="btn btn-primary">Update password</a></p>
+                <p></p><a href="{% url 'password_change' %}" class="btn btn-secondary">Update password</a></p>
         
-                <h1>Section 3</h1>
-        
-                <p>Settings related to section 3</p>
-        
+                <h1>Account Management</h1>
+               
                 <button type="button" class="btn btn-outline-danger">Delete account</button>
             </div>
         </div>
-
-
-
     </main>
+    <script>
+        let form = document.getElementById("form")
+        let sub = document.getElementById("submit_btn")
+        let reset = document.getElementById("reset_btn")
+
+        form.addEventListener("input", () => {
+            sub.disabled = false
+            reset.disabled = false
+        })
+        
+        form.addEventListener("reset", () => {
+            sub.disabled = true
+            reset.disabled = true
+        })
+
+    </script>
 </body>
 </html>
