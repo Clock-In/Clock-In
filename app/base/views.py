@@ -53,5 +53,5 @@ def time_table_page(request):
     return render(request, 'user/timetable.html',{'month':month,'weeks':weeks})
 
 def settings(request):
-    return render(request, 'base/settings.html', {})
+    return render(request, 'user/settings.html', {})
 
