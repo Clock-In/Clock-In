@@ -3,6 +3,7 @@ from django.contrib.auth import logout as auth_logout
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from datetime import datetime
+from .models import User,Shift,Role
 import calendar
 
 @login_required
@@ -17,7 +18,7 @@ def time_table_page(request):
     current_date = datetime.now()
 
     user = request.user
-
+    
     #MONTH HANDLING
     monthNum = current_date.month
     months = ["January","February","March","April","May","June",
@@ -48,6 +49,13 @@ def time_table_page(request):
         dayList.append(dayi)
 
     weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
-    
 
-    return render(request, 'user/timetable.html',{'month':month,'weeks':weeks})
+    #//////////////////SHIFT HANDLING///////////////////////////////////
+    
+    #shift = user.Shift.all() MODIFY ONCE MODELS ARE READY
+    #print(shift.assigned_to)
+
+    print(user.email)
+
+    
+    return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user})

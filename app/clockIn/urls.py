@@ -48,11 +48,12 @@ auth_urls = [
         name="password_reset_complete",
     ),
     path('profile/', views.profile),
+    path('timetable/', views.time_table_page, name="timetable"),
 ]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include(auth_urls)),
-    path('timetable/', views.time_table_page, name="timetable"),
+    
     
 ]
