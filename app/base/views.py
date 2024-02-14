@@ -2,10 +2,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
-from datetime import datetime
 import calendar
+import datetime
 
-from .forms import ExtendedCustomUserChangeForm
+from base import models
+from base.auth import manager_only
+from clockIn import utils
+
+from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm
 
 @login_required
 def profile(request: HttpRequest):
@@ -16,7 +20,7 @@ def logout(request: HttpRequest):
     return render(request, 'registration/logged_out.html')
 
 def time_table_page(request):
-    current_date = datetime.now()
+    current_date = datetime.datetime.now()
 
     user = request.user
 
@@ -63,4 +67,37 @@ def settings(request):
     else:
         user_form = ExtendedCustomUserChangeForm(instance=request.user)
     return render(request, 'user/settings.html', {"user": request.user, "user_form": user_form,})
+
+@login_required
+@manager_only
+def create_timetable(request):
+
+    if request.method == "POST":
+        form = ShiftCreationForm(request.POST)
+        if form.is_valid():
+            obj: models.Shift = form.save(commit=False)
+            obj.role = obj.assigned_to.role # type: ignore
+            obj.save()
+    else:
+        form = ShiftCreationForm()
+    start_date = datetime.datetime.fromtimestamp(utils.int_or_zero(request.GET.get('week_start', 0)))
+    if start_date.timestamp() == 0:
+        start_date = datetime.datetime.today()
+        start_date += datetime.timedelta(days=-start_date.weekday()) # get most recent monday
+        start_date = datetime.datetime.combine(start_date, datetime.time(0))
+    shifts: list[models.Shift] = models.Shift.objects.filter( # type: ignore
+        start_at__range=[start_date, start_date + datetime.timedelta(days=6)]
+    ).order_by('start_at')
+    grouped_shifts = [[] for _ in range(7)]
+    for shift in shifts:
+        start: datetime.datetime = shift.start_at # type: ignore
+        grouped_shifts[start.weekday()].append(shift)
+    ctx = {
+        "user": request.user,
+        "form": form,
+        "start_date": start_date,
+        "shifts": grouped_shifts,
+        "days": [start_date + datetime.timedelta(days=i) for i in range(7)] # for convenience in the frontend
+    }
+    return render(request, 'admin/create_shift.html', ctx)
 

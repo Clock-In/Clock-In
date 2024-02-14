@@ -1,0 +1,105 @@
+<head>
+    <style>
+        .timetable-container {
+            display: grid;
+            grid-template-columns: repeat(7, auto);
+            grid-template-rows: repeat(auto-fill, auto);
+
+        }
+
+        .day-column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .shift-listing {
+            border: .1rem solid black;
+        }
+
+        #create-form {
+            opacity: 0;
+        }
+
+    </style>
+    <script defer>
+        const dateFmtOpts = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        };
+        const baseDate = new Date('{{ start_date.isoformat }}');
+        window.addEventListener('DOMContentLoaded', () => {
+            const start_at_input = document.getElementById('id_start_at');
+            const end_at_input = document.getElementById('id_end_at');
+            start_at_input.type = 'datetime-local';
+            end_at_input.type = 'datetime-local';
+            document.getElementById('start_date').innerHTML = baseDate.toLocaleDateString(navigator.languages, dateFmtOpts);
+            Array.from(document.getElementsByClassName('day-label')).forEach((span, i) => {
+                const date = new Date(baseDate);
+                date.setDate(date.getDate() + i);
+                span.innerHTML = date.toLocaleDateString(navigator.languages, dateFmtOpts);
+            });
+
+            Array.from(document.getElementsByClassName('create-btn')).forEach((btn, i) => {
+                const date = new Date(baseDate);
+                date.setDate(date.getDate() + i);
+                const dateString = date.toISOString().slice(0, 16);
+                btn.addEventListener('click', () => {
+                    start_at_input.value = dateString;
+                    end_at_input.value = dateString;
+                    document.getElementById('create-form').style.opacity = 1;
+                })
+            })
+        })
+        function changeWeek(direction) {
+            const query = new URLSearchParams(window.location.search);
+            baseDate.setDate(baseDate.getDate() + (7 * direction));
+            query.set('week_start', Math.floor(baseDate.getTime() / 1000));
+            window.location.search = query.toString();
+        }
+    </script>
+</head>
+
+<div class="week-selector">
+    <button id="week-back" onclick="changeWeek(-1)">&lt</button>
+    <span id="start_date"></span>
+    <button id="week-forward" onclick="changeWeek(1)">&gt</button>
+</div>
+<hr>
+<div class="timetable-container">
+    {% for day in shifts %}
+    <span class="day-label"></span>
+    {% endfor %}
+    {% for day in shifts %}
+    <div class="day-column">
+        {% for shift in day %}
+        <span class="shift-listing">{{shift.assigned_to}}
+            <script>
+                document.write(
+                    new Date('{{shift.start_at.isoformat}}').toLocaleTimeString(
+                        navigator.languages, {
+                        hour: '2-digit', minute: '2-digit'
+                    }));
+            </script>
+            -
+            <script>
+                document.write(
+                    new Date('{{shift.end_at.isoformat}}').toLocaleTimeString(
+                        navigator.languages, {
+                        hour: '2-digit', minute: '2-digit'
+                    }));
+            </script>
+        </span>
+        {% endfor %}
+        <button class="create-btn">+</button>
+    </div>
+    {% endfor %}
+</div>
+
+<hr>
+<form class="form" method="POST" id="create-form">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Create">
+</form>
