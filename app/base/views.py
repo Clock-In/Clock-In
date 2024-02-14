@@ -5,6 +5,7 @@ from django.shortcuts import render
 from datetime import datetime
 from .models import User,Shift,Role
 import calendar
+from django.db.models import Q
 
 @login_required
 def profile(request: HttpRequest):
@@ -36,26 +37,40 @@ def time_table_page(request):
     first_day = first_day.weekday()
     print(first_day)
     for i in range(first_day):
-        dayi = {'date':"",'weekday':i}
+        dayi = {'date':"",'weekday':i,'shift': 0}
         dayList.append(dayi)
 
     row = 0
     #lunes = 0
+
+    user_shifts = Shift.objects.filter(assigned_to=request.user)
+
+    
     
     for day in range(1,num_days_in_month + 1):
         current_day = current_date.replace(day=day)
         current_weekday = current_day.weekday()
-        dayi = {'date':day,'weekday':current_weekday}
+        shift_day = 0
+        for shift in user_shifts:
+            start = (shift.start_at)   
+
+            if current_day.day == start.day:
+                shift_day = shift
+
+        dayi = {'date':day,'weekday':current_weekday,'shift':shift_day}
         dayList.append(dayi)
 
     weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
+    print(weeks)
+    # for week in weeks:
+    #     for day in week:
+    #         print(day["shift"])
 
     #//////////////////SHIFT HANDLING///////////////////////////////////
     
-    #shift = user.Shift.all() MODIFY ONCE MODELS ARE READY
-    #print(shift.assigned_to)
-
     print(user.email)
 
+
+        #print(shift.start_at)
     
     return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user})

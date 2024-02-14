@@ -47,6 +47,16 @@
       font-size: 24px;
     }
 
+    .shiftDay {
+
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+      background-color: #2b23a4;
+      color: white;
+      
+    }
+
   </style>
 </head>
 <body>
@@ -69,7 +79,11 @@
        {% for week in weeks %}
         <tr>
           {% for day in week%}
-          <td>{{day.date}}</td>
+            {% if day.shift == 0 %}
+              <td>{{day.date}}</td>
+            {% else %}
+              <td class="shiftDay">{{day.date}}</td>
+            {% endif %}
           {% endfor %}
         </tr>
         {% endfor %}

@@ -46,10 +46,16 @@ class User(AbstractUser): # Extend default user model
 class Shift(models.Model):
     assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_assigned_to')
     completed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_completed_by', null=True)
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, null = True)
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
     wage_multiplier = models.FloatField(default=1) # type: ignore
+
+    class Meta:
+        ordering = ['-start_at', '-end_at']
+
+    def __str__(self):
+        return str(self.assigned_to)
 
 class ShiftSwapRequest(models.Model):
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
