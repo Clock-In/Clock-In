@@ -49,6 +49,7 @@ auth_urls = [
     ),
     path('profile/', views.profile),
     path('timetable/', views.time_table_page, name="timetable"),
+    path('my_shift/<str:pk>', views.my_shift, name="my_shift")
 ]
 
 urlpatterns = [

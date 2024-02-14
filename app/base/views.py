@@ -15,6 +15,12 @@ def logout(request: HttpRequest):
     auth_logout(request)
     return render(request, 'registration/logged_out.html')
 
+def my_shift(request,pk):
+    shift = Shift.objects.get(id = pk)
+
+    return render(request, 'user/myshift.html',{'shift':shift})
+
+
 def time_table_page(request):
     current_date = datetime.now()
 

@@ -57,6 +57,16 @@
       
     }
 
+    a {
+      color: white;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      font-weight: bold;
+    }
+
   </style>
 </head>
 <body>
@@ -82,7 +92,7 @@
             {% if day.shift == 0 %}
               <td>{{day.date}}</td>
             {% else %}
-              <td class="shiftDay">{{day.date}}</td>
+              <td class="shiftDay"><a href="{% url 'my_shift' day.shift.id %}">{{day.date}}</a></td>
             {% endif %}
           {% endfor %}
         </tr>
