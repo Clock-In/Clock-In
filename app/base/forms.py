@@ -1,5 +1,7 @@
 
 from django import forms
+from django.contrib import admin
+from django.contrib.admin.widgets import AutocompleteSelect
 from django.contrib.auth.admin import UserChangeForm, UserCreationForm
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.utils.translation import gettext_lazy as _
@@ -35,7 +37,10 @@ class ExtendedCustomUserChangeForm(UserChangeForm):
                              widget=forms.EmailInput(attrs={'class': 'form-control', 'id': 'email_input'}))
         
 class ShiftCreationForm(forms.ModelForm):
-
+    assigned_to = forms.ModelChoiceField(
+            queryset=User.objects.all(), 
+            widget=AutocompleteSelect(Shift._meta.get_field('assigned_to'), admin.site)
+            )
     class Meta:
         model = Shift
         fields = ('assigned_to', 'start_at', 'end_at', 'wage_multiplier')

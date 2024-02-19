@@ -1,4 +1,7 @@
 <head>
+    {% block extrahead %}
+    {{ form.media }}
+    {% endblock %}
     <style>
         .timetable-container {
             display: grid;
