@@ -20,7 +20,7 @@ from base import views
 from django.contrib.auth import views as auth_views
 
 auth_urls = [
-    path("login/", auth_views.LoginView.as_view(), name="login"),
+    path("login/", views.CustomLoginView.as_view(), name="login"),
     path("logout/", views.logout, name="logout"),
     path(
         "password_change/", auth_views.PasswordChangeView.as_view(), name="password_change"

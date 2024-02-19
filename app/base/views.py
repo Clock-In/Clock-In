@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
-from django.http import HttpRequest, HttpResponse
+from django.contrib.auth.views import LoginView
+from django.http import HttpRequest
 from django.shortcuts import render
 import calendar
 import datetime
@@ -10,6 +11,8 @@ from base.auth import manager_only
 from clockIn import utils
 
 from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm
+
+from base.forms import LoginForm
 
 @login_required
 def profile(request: HttpRequest):
@@ -101,3 +104,5 @@ def create_timetable(request):
     }
     return render(request, 'admin/create_shift.html', ctx)
 
+class CustomLoginView(LoginView):
+    form_class = LoginForm
