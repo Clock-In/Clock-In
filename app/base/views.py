@@ -75,14 +75,17 @@ def settings(request):
 @manager_only
 def create_timetable(request):
 
+    form = ShiftCreationForm()
     if request.method == "POST":
         form = ShiftCreationForm(request.POST)
         if form.is_valid():
             obj: models.Shift = form.save(commit=False)
-            obj.role = obj.assigned_to.role # type: ignore
+            obj.role = obj.assigned_to.role if not form.cleaned_data.get('is_open') else form.cleaned_data.get('role') # type: ignore
             obj.save()
-    else:
-        form = ShiftCreationForm()
+            if form.cleaned_data.get('is_open'):
+                req = models.ShiftSwapRequest(shift=obj, message=form.cleaned_data.get('message'))
+                req.save()
+
     start_date = datetime.datetime.fromtimestamp(utils.int_or_zero(request.GET.get('week_start', 0)))
     if start_date.timestamp() == 0:
         start_date = datetime.datetime.today()
@@ -94,6 +97,8 @@ def create_timetable(request):
     grouped_shifts = [[] for _ in range(7)]
     for shift in shifts:
         start: datetime.datetime = shift.start_at # type: ignore
+        if shift.assigned_to is None:
+            shift.assigned_to = models.User(first_name='[Open]') # type: ignore
         grouped_shifts[start.weekday()].append(shift)
     ctx = {
         "user": request.user,

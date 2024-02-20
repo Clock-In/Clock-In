@@ -21,6 +21,11 @@
 
         #create-form {
             opacity: 0;
+            margin-top: 2rem;
+        }
+
+        div:has(> #role_input) {
+            display: none;
         }
 
     </style>
@@ -35,8 +40,26 @@
         window.addEventListener('DOMContentLoaded', () => {
             const start_at_input = document.getElementById('id_start_at');
             const end_at_input = document.getElementById('id_end_at');
+            const user_input = document.getElementById('assigned_to_input');
+            const role_input = document.getElementById('role_input');
+            const message_input = document.getElementById('id_message');
             start_at_input.type = 'datetime-local';
             end_at_input.type = 'datetime-local';
+            const openCb = (evt) => {
+                const isOpen = evt.target.checked;
+                user_input.value = "";
+                role_input.value = "";
+                user_input.parentNode.style.display = isOpen ? 'none' : 'block';
+                role_input.parentNode.style.display = isOpen ? 'block' : 'none';
+                message_input.parentNode.style.display = isOpen ? 'block' : 'none';
+                if (isOpen) {
+                    user_input.removeAttribute('required');
+                    role_input.setAttribute('required', true);
+                } else {
+                    role_input.removeAttribute('required');
+                    user_input.setAttribute('required', true);
+                }
+            };
             document.getElementById('start_date').innerHTML = baseDate.toLocaleDateString(navigator.languages, dateFmtOpts);
             Array.from(document.getElementsByClassName('day-label')).forEach((span, i) => {
                 const date = new Date(baseDate);
@@ -54,6 +77,9 @@
                     document.getElementById('create-form').style.opacity = 1;
                 })
             })
+            const isOpenInput = document.getElementById('id_is_open');
+            isOpenInput.addEventListener('change', openCb);
+            openCb({target: isOpenInput});
         })
         function changeWeek(direction) {
             const query = new URLSearchParams(window.location.search);

@@ -41,7 +41,11 @@ class ShiftAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ['assigned_to']
 
+class RoleAdmin(admin.ModelAdmin):
+    model = Role
+    search_fields = ('name',)
+
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Shift, ShiftAdmin)
-admin.site.register(Role)
+admin.site.register(Role, RoleAdmin)
 
