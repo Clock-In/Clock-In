@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Statistics</title>
+</head>
+<body>
+    Hello, {{user}}
+
+    <h3>In the last 7 days</h3>
+    {% for s in week %}
+    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
+    {% endfor %}
+    
+    <h3>This month so far</h3>
+    {% for s in month %}
+    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
+    {% endfor %}
+    
+    <h3>This year so far</h3>
+    {% for s in year %}
+    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
+    {% endfor %}
+
+    <h3>All shifts scheduled or worked</h3>
+    {% for s in shifts %}
+    <p>{{s.id}} -- {{user.role}}, Starts at {{s.start_at}} Ends at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
+    {% endfor %}
+    <h3>Total hours worked to date: {{elapsed}}</h3>
+    <h3>Total earnings to date: £{{earnings}}</h3>
+
+    <a href="{% url 'profile' %}">Back</a>
+</body>
+</html>
