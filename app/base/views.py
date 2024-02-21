@@ -70,7 +70,7 @@ def settings(request):
 @login_required
 def statistics(request):
     #NOTE: should this be on client side?
-    today = date.today()
+    today = datetime.now()
     last_week = today - timedelta(weeks=1)
     month_start = today.replace(day=1)
     year_start = month_start.replace(month=1)
@@ -81,11 +81,11 @@ def statistics(request):
     if all_shifts.count() == 0:
         return render(request, "user/statistics.html", {"empty": True})
     
-    scheduled = all_shifts.filter(start_at__range=[today, datetime.max])
-    to_date = all_shifts.filter(start_at__range=[datetime.min, today])
-    past_week = all_shifts.filter(start_at__range=[last_week, today])
-    this_month_to_date = all_shifts.filter(start_at__range=[month_start, today])
-    this_year_to_date = all_shifts.filter(start_at__range=[year_start,today])
+    scheduled = all_shifts.filter(end_at__range=[today, datetime.max])
+    to_date = all_shifts.filter(end_at__range=[datetime.min, today])
+    past_week = all_shifts.filter(end_at__range=[last_week, today])
+    this_month_to_date = all_shifts.filter(end_at__range=[month_start, today])
+    this_year_to_date = all_shifts.filter(end_at__range=[year_start,today])
          
     calculated_to_date = to_date.annotate(
         time_difference=ExpressionWrapper(
