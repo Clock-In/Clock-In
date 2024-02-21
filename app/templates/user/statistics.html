@@ -8,28 +8,44 @@
 <body>
     Hello, {{user}}
 
+    {% if empty %}
+
+    <h2>Nothing to display!</h2>
+    <h3>Once you work some shifts, this page will display data...</h3>
+
+    {% else%}
     <h3>In the last 7 days</h3>
-    {% for s in week %}
+    <h4>Total earnings: £{{week.earnings}}</h4>
+    {% for s in week.shifts %}
     <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
     {% endfor %}
     
     <h3>This month so far</h3>
-    {% for s in month %}
+    <h4>Total earnings: £{{month.earnings}}</h4>
+    {% for s in month.shifts %}
     <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
     {% endfor %}
     
     <h3>This year so far</h3>
-    {% for s in year %}
+    <h4>Total earnings: £{{year.earnings}}</h4>
+    {% for s in year.shifts %}
+    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
+    {% endfor %}
+    
+    <h3>Total</h3>
+    <h4>Total earnings: £{{to_date.earnings}}</h4>
+    {% for s in to_date.shifts %}
     <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
     {% endfor %}
 
-    <h3>All shifts scheduled or worked</h3>
-    {% for s in shifts %}
+    <h2>Total hours worked to date: {{elapsed}}</h2>
+    <h2>Total earnings to date: £{{to_date.earnings}}</h2>
+    <hr>
+    <h3>Next scheduled shifts</h3>
+    {% for s in scheduled %}
     <p>{{s.id}} -- {{user.role}}, Starts at {{s.start_at}} Ends at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
     {% endfor %}
-    <h3>Total hours worked to date: {{elapsed}}</h3>
-    <h3>Total earnings to date: £{{earnings}}</h3>
-
+    {% endif %}
     <a href="{% url 'profile' %}">Back</a>
 </body>
 </html>
