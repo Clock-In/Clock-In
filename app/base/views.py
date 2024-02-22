@@ -1,11 +1,18 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
-from django.http import HttpRequest, HttpResponse
+from django.contrib.auth.views import LoginView
+from django.http import HttpRequest
 from django.shortcuts import render
-from datetime import datetime
-from .models import User,Shift,Role
 import calendar
-from django.db.models import Q
+import datetime
+
+from base import models
+from base.auth import manager_only
+from clockIn import utils
+
+from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm
+
+from base.forms import LoginForm
 
 @login_required
 def profile(request: HttpRequest):
@@ -16,13 +23,13 @@ def logout(request: HttpRequest):
     return render(request, 'registration/logged_out.html')
 
 def my_shift(request,pk):
-    shift = Shift.objects.get(id = pk)
+    shift = models.Shift.objects.get(id = pk)
 
     return render(request, 'user/myshift.html',{'shift':shift})
 
 
 def time_table_page(request):
-    current_date = datetime.now()
+    current_date = datetime.datetime.now()
 
     user = request.user
     
@@ -41,15 +48,11 @@ def time_table_page(request):
 
     first_day = current_date.replace(day=1)
     first_day = first_day.weekday()
-    print(first_day)
     for i in range(first_day):
         dayi = {'date':"",'weekday':i,'shift': 0}
         dayList.append(dayi)
 
-    row = 0
-    #lunes = 0
-
-    user_shifts = Shift.objects.filter(assigned_to=request.user)
+    user_shifts = models.Shift.objects.filter(assigned_to=request.user)
 
     
     
@@ -67,16 +70,56 @@ def time_table_page(request):
         dayList.append(dayi)
 
     weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
-    print(weeks)
-    # for week in weeks:
-    #     for day in week:
-    #         print(day["shift"])
-
-    #//////////////////SHIFT HANDLING///////////////////////////////////
-    
-    print(user.email)
-
-
-        #print(shift.start_at)
     
     return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user})
+
+@login_required
+def settings(request):
+    if request.method == "POST":
+        user_form = ExtendedCustomUserChangeForm(request.POST, instance=request.user)
+        if user_form.is_valid():
+            user_form.save()
+    else:
+        user_form = ExtendedCustomUserChangeForm(instance=request.user)
+    return render(request, 'user/settings.html', {"user": request.user, "user_form": user_form,})
+
+@login_required
+@manager_only
+def create_timetable(request):
+
+    form = ShiftCreationForm()
+    if request.method == "POST":
+        form = ShiftCreationForm(request.POST)
+        if form.is_valid():
+            obj: models.Shift = form.save(commit=False)
+            obj.role = obj.assigned_to.role if not form.cleaned_data.get('is_open') else form.cleaned_data.get('role') # type: ignore
+            obj.save()
+            if form.cleaned_data.get('is_open'):
+                req = models.ShiftSwapRequest(shift=obj, message=form.cleaned_data.get('message'))
+                req.save()
+
+    start_date = datetime.datetime.fromtimestamp(utils.int_or_zero(request.GET.get('week_start', 0)))
+    if start_date.timestamp() == 0:
+        start_date = datetime.datetime.today()
+        start_date += datetime.timedelta(days=-start_date.weekday()) # get most recent monday
+        start_date = datetime.datetime.combine(start_date, datetime.time(0))
+    shifts: list[models.Shift] = models.Shift.objects.filter( # type: ignore
+        start_at__range=[start_date, start_date + datetime.timedelta(days=6)]
+    ).order_by('start_at')
+    grouped_shifts = [[] for _ in range(7)]
+    for shift in shifts:
+        start: datetime.datetime = shift.start_at # type: ignore
+        if shift.assigned_to is None:
+            shift.assigned_to = models.User(first_name='[Open]') # type: ignore
+        grouped_shifts[start.weekday()].append(shift)
+    ctx = {
+        "user": request.user,
+        "form": form,
+        "start_date": start_date,
+        "shifts": grouped_shifts,
+        "days": [start_date + datetime.timedelta(days=i) for i in range(7)] # for convenience in the frontend
+    }
+    return render(request, 'admin/create_shift.html', ctx)
+
+class CustomLoginView(LoginView):
+    form_class = LoginForm

@@ -44,7 +44,7 @@ class User(AbstractUser): # Extend default user model
         return f"{self.first_name} {self.last_name}"
 
 class Shift(models.Model):
-    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_assigned_to')
+    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_assigned_to', null=True)
     completed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_completed_by', null=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null = True)
     start_at = models.DateTimeField()

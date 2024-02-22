@@ -29,7 +29,7 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
-    search_fields = ('email',)
+    search_fields = ('first_name', 'last_name',)
     ordering = ('email',)
 
 class ShiftAdmin(admin.ModelAdmin):
@@ -39,8 +39,13 @@ class ShiftAdmin(admin.ModelAdmin):
     add_fieldsets = (
         (None, {'fields': ('assigned_to', 'start_at', 'end_at', 'wage_multiplier')}),
     )
+    autocomplete_fields = ['assigned_to']
+
+class RoleAdmin(admin.ModelAdmin):
+    model = Role
+    search_fields = ('name',)
 
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Shift, ShiftAdmin)
-admin.site.register(Role)
+admin.site.register(Role, RoleAdmin)
 

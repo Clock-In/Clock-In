@@ -20,7 +20,7 @@ from base import views
 from django.contrib.auth import views as auth_views
 
 auth_urls = [
-    path("login/", auth_views.LoginView.as_view(), name="login"),
+    path("login/", views.CustomLoginView.as_view(), name="login"),
     path("logout/", views.logout, name="logout"),
     path(
         "password_change/", auth_views.PasswordChangeView.as_view(), name="password_change"
@@ -48,13 +48,13 @@ auth_urls = [
         name="password_reset_complete",
     ),
     path('profile/', views.profile),
-    path('timetable/', views.time_table_page, name="timetable"),
-    path('my_shift/<str:pk>', views.my_shift, name="my_shift")
+    path("settings/", views.settings, name="settings"),
 ]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include(auth_urls)),
-    
-    
+    path('timetable/', views.time_table_page, name="timetable"),
+    path('timetable/create/', views.create_timetable, name="create_timetable"),
+    path('my_shift/<str:pk>/', views.my_shift, name="my_shift"),
 ]
