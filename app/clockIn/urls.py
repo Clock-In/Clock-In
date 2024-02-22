@@ -47,7 +47,7 @@ auth_urls = [
         auth_views.PasswordResetCompleteView.as_view(),
         name="password_reset_complete",
     ),
-    path('profile/', views.profile),
+    path('profile/', views.profile, name="profile"),
     path("settings/", views.settings, name="settings"),
 ]
 
