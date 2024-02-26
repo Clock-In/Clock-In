@@ -125,7 +125,7 @@ def create_timetable(request):
     return render(request, 'admin/create_shift.html', ctx)
 
 def statistics(request):
-    #NOTE: should this be on client side?
+
     today = datetime.datetime.now()
     last_week = today - datetime.timedelta(weeks=1)
     month_start = today.replace(day=1)
@@ -143,6 +143,16 @@ def statistics(request):
     this_month_to_date = all_shifts.filter(end_at__range=[month_start, today])
     this_year_to_date = all_shifts.filter(end_at__range=[year_start,today])
          
+    day_distribution = {}
+    day_distribution["monday"] = to_date.filter(start_at__week_day=3).count()
+    day_distribution["tuesday"] = to_date.filter(start_at__week_day=4).count()
+    day_distribution["wednesday"] = to_date.filter(start_at__week_day=5).count()
+    day_distribution["thursday"] = to_date.filter(start_at__week_day=6).count()
+    day_distribution["friday"] = to_date.filter(start_at__week_day=7).count()
+    day_distribution["saturday"] = to_date.filter(start_at__week_day=1).count()
+    day_distribution["sunday"] = to_date.filter(start_at__week_day=2).count()
+
+
     calculated_to_date = to_date.annotate(
         time_difference=ExpressionWrapper(
             Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
@@ -194,6 +204,7 @@ def statistics(request):
             "to_date": {"shifts": to_date, "earnings":(round(earnings_to_date,2)) if earnings_to_date != None else 0 },
             "scheduled": scheduled,
             "elapsed":time_elapsed, 
+            "days": day_distribution,
             })
 
 class CustomLoginView(LoginView):
