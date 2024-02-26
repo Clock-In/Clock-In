@@ -8,12 +8,27 @@
 <body>
     Hello, {{user}}
 
-    {% if empty %}
+    {% if manager %}
+        
+    <h1>Manager</h1>
+
+
+    {% elif empty %}
 
     <h2>Nothing to display!</h2>
     <h3>Once you work some shifts, this page will display data...</h3>
 
     {% else%}
+    <h3>Shift distribution</h3>
+
+    <p>Monday: {{ days.mondays }}</p>
+    <p>Tuesday: {{ days.tuesdays }}</p>
+    <p>Wednesday: {{ days.wednesdays }}</p>
+    <p>Thursday: {{ days.thursdays }}</p>
+    <p>Friday: {{ days.fridays }}</p>
+    <p>Saturday: {{ days.saturdays }}</p>
+    <p>Sunday: {{ days.sundays }}</p>
+
     <h3>In the last 7 days</h3>
     <h4>Total earnings: £{{week.earnings}}</h4>
     {% for s in week.shifts %}
