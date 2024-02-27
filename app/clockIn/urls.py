@@ -55,6 +55,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include(auth_urls)),
     path('timetable/', views.time_table_page, name="timetable"),
+    path('timetable/week', views.timetable_week, name="timetable_week"),
     path('timetable/create/', views.create_timetable, name="create_timetable"),
     path('my_shift/<str:pk>/', views.my_shift, name="my_shift"),
     path('statistics/', views.statistics, name="statistics"),

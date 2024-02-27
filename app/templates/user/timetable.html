@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Calendar</title>
+  <title>Timetable</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -72,6 +72,7 @@
 <body>
   {% include 'Navigation_Bar.html' %}
   <div class="calendar">
+    <a href="{% url 'timetable_week' %}">See my week</a>
     <h2 class="month-header" id="month-header">{{month}}</h2>
     <table>
       <thead>

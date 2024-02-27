@@ -31,6 +31,7 @@ def my_shift(request,pk):
     return render(request, 'user/myshift.html',{'shift':shift})
 
 
+@login_required
 def time_table_page(request):
     current_date = datetime.datetime.now()
 
@@ -75,6 +76,53 @@ def time_table_page(request):
     weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
     
     return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user})
+
+def timetable_week(request):
+
+    current_date = datetime.datetime.now()
+    user = request.user
+    monthNum = current_date.month
+    months = ["January","February","March","April","May","June",
+    "July","August","September","October","November","December"]
+    month = months[monthNum-1]
+    year = current_date.year
+    day = current_date.day
+    hour = current_date.hour
+    num_days_in_month = calendar.monthrange(year, monthNum)[1]
+    dayList = []
+    first_day = current_date.replace(day=1)
+    first_day = first_day.weekday()
+    for i in range(first_day):
+        dayi = {'date':"",'weekday':i,'shift': 0}
+        dayList.append(dayi)
+    user_shifts = models.Shift.objects.filter(assigned_to=request.user)
+    for day in range(1,num_days_in_month + 1):
+        current_day = current_date.replace(day=day)
+        current_weekday = current_day.weekday()
+        shift_day = 0
+        for shift in user_shifts:
+            start = (shift.start_at)   
+            if current_day.day == start.day:
+                shift_day = shift
+        dayi = {'date':day,'weekday':current_weekday,'shift':shift_day}
+        dayList.append(dayi)
+    weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
+
+    print(weeks)
+
+    actual_week = {}
+
+    for week in weeks:
+        for day in week:
+            if day['date'] == current_date.day:
+                actual_week = week
+
+    start_end = f"{month} week {actual_week[0]['date']} to {actual_week[len(actual_week)-1]['date']}"
+    print(start_end)
+
+    return render(request, 'user/timetable-week.html',{'month':month,'week':actual_week,'user':user,'week_title':start_end})
+    
+
 
 @login_required
 def settings(request):

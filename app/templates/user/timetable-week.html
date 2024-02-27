@@ -1,0 +1,113 @@
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.calendar {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+tr {
+  padding: 0px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+th {
+  background-color: #2b23a4;
+  color: white;
+}
+td {
+  cursor: pointer;
+}
+.selected {
+  background-color: #3498db;
+  color: #fff;
+}
+.month-header {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.month-header {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.shiftDay {
+
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+  background-color: #2b23a4;
+  color: white;
+  
+}
+
+a {
+  color: white;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  font-weight: bold;
+}
+</style>
+<body>
+  {% include 'Navigation_Bar.html' %}
+  <div class="calendar">
+    <a href="{% url 'timetable' %}">See whole month</a>
+    <h2 class="month-header" id="month-header">{{week_title}}</h2>
+    <table>
+
+      {% for day in week %}
+      <th>{{day.date}}</th>
+      {% endfor %}
+      <tr>
+      {% for day in week %}
+      {% if day.shift == 0 %}
+        <td></td>
+      {% else %}
+        <td>Your shift starts at:</td>
+      {% endif %}
+      {% endfor %}
+      </tr>
+      <tr>
+        {% for day in week %}
+        {% if day.shift == 0 %}
+          <td>nothing today</td>
+        {% else %}
+          <td class=""><a href="{% url 'my_shift' day.shift.id %}">{{day.shift.start_at}}</a></td>
+        {% endif %}
+        {% endfor %}
+        </tr>
+        <tr>
+          {% for day in week %}
+          {% if day.shift == 0 %}
+            <td></td>
+          {% else %}
+          <td class=""><a href="{% url 'my_shift' day.shift.id %}">{{day.shift.end_at}}</a></td>
+          {% endif %}
+          {% endfor %}
+          </tr>
+        
+      
+      
+      
+    </table>
+  </div>
+</body>
+</html>
