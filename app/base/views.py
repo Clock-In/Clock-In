@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.views import LoginView
 from django.http import HttpRequest
+from django.http.request import QueryDict
 from django.shortcuts import render
 import calendar
 import datetime
@@ -10,7 +11,7 @@ from base import models
 from base.auth import manager_only
 from clockIn import utils
 
-from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm
+from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm, ShiftSwapRequestForm
 
 from base.forms import LoginForm
 from .forms import ExtendedCustomUserChangeForm
@@ -243,6 +244,27 @@ def statistics(request):
             "scheduled": scheduled,
             "elapsed":time_elapsed, 
             })
+
+@login_required
+def shift_swap_request(request, pk):
+    form = ShiftSwapRequestForm()
+    if request.method == "POST":
+        post_data: QueryDict = request.POST.copy()
+        post_data.update({
+            "shift": pk
+        })
+        form = ShiftSwapRequestForm(post_data)
+        if form.is_valid():
+            if form.cleaned_data['shift'].assigned_to.id == request.user.id:
+                form.save()
+
+    return render(
+        request, 'shifts/swap_request.html',
+        {
+            "user": request.user,
+            "form": form
+        }
+    )
 
 class CustomLoginView(LoginView):
     form_class = LoginForm

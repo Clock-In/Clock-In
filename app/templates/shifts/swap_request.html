@@ -1,0 +1,12 @@
+<style>
+
+div:has(> #id_shift) {
+    display: none;
+}
+
+</style>
+<form class="form" method="POST" id="create-form">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Request">
+</form>
