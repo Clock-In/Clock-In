@@ -34,6 +34,7 @@
 
             </div>
         </div>
+
         <div class="row" style="height: 50vh">
             <div class="col-md text-center">
                 <h3>Shift distribution</h3>
@@ -41,47 +42,104 @@
                 <div id="day_distribution"></div>
             </div>
 
-            <div class="col-md h-100">
-                <h3>In the last 7 days <span class="text-muted">£{{week.earnings}}</span></h3>
-
-                <div class="list-group h-75" style="overflow-y: auto;">
-                {% for s in week.shifts %}
-                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
-                {% endfor %}
+            <div class="col-md h-100" id="shift_group">
+                <div class="list-group list-group-horizontal mb-2">
+                    <h3 class="me-4">Shift history</h3>
+                    <a class="btn btn-primary" data-bs-toggle="collapse" href="#week" role="button" aria-expanded="false" aria-controls="collapseExample">Week</a>
+                    <a class="btn btn-primary" data-bs-toggle="collapse" href="#month" role="button" aria-expanded="false" aria-controls="collapseExample">Month</a>
+                    <a class="btn btn-primary" data-bs-toggle="collapse" href="#year" role="button" aria-expanded="false" aria-controls="collapseExample">Year</a>
                 </div>
+
+
+                <div class="accordian-group h-75">
+                    <div class="collapse show h-100" data-bs-parent="#shift_group" id="week">
+                        <div class="card card-body h-100">
+                            <h3>In the last 7 days <span class="text-muted">£{{week.earnings}}</span></h3>
+    
+                            <div class="list-group h-75" style="overflow-y: auto;">
+                            {% for s in week.shifts %}
+                                <div class="list-group-item">
+                                    {{s.start_at}} - {{s.end_at}}
+                                    <footer class="text-muted">
+                                        {{user.role}}
+                                        {% if s.wage_multiplier != 1.0 %}
+                                        <span class="badge text-bg-info">{{s.wage_multiplier}}x</span>
+                                        {% endif %}
+                                    </footer>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="collapse h-100" data-bs-parent="#shift_group" id="month">
+                        <div class="card card-body h-100">
+                            <h3>This month so far <span class="text-muted">£{{month.earnings}}</span></h3>
+                            <div class="list-group h-75" style="overflow-y: auto;">
+                            {% for s in month.shifts %}
+                                <div class="list-group-item">
+                                    {{s.start_at}} - {{s.end_at}}
+                                    <footer class="text-muted">
+                                        {{user.role}}
+                                        {% if s.wage_multiplier != 1.0 %}
+                                        <span class="badge text-bg-info">{{s.wage_multiplier}}x</span>
+                                        {% endif %}
+                                    </footer>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        </div>
+                    </div>
+    
+                    <div class="collapse h-100" data-bs-parent="#shift_group" id="year">
+                        <div class="card card-body h-100">
+                            <h3>This year so far <span class="text-muted">£{{year.earnings}}</span></h3>
+                            <div class="list-group h-75" style="overflow-y: auto;">
+                            {% for s in year.shifts %}
+                                <div class="list-group-item">
+                                    {{s.start_at}} - {{s.end_at}}
+                                    <footer class="text-muted">
+                                        {{user.role}}
+                                        {% if s.wage_multiplier != 1.0 %}
+                                        <span class="badge text-bg-info">{{s.wage_multiplier}}x</span>
+                                        {% endif %}
+                                    </footer>
+    
+                                </div>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+    
             </div>
 
-            <div class="col-md h-100">
-                <h3>This month so far <span class="text-muted">£{{month.earnings}}</span></h3>
-                <div class="list-group h-75" style="overflow-y: auto;">
-                {% for s in month.shifts %}
-                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
-                {% endfor %}
-                </div>
+            <div class="col-md text-center">
+                <h3>Predicted earnings</h3>
             </div>
-
         </div>
-        <div class="row">
 
-            <div class="col-md h-100">
+        <div class="row">
+           
+            <div class="col h-100">
                 <h3>Next scheduled shifts</h3>
                 <div class="list-group h-75" style="overflow-y: auto;">
-                {% for s in scheduled %}
-                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
-                {% endfor %}
+                    {% for s in scheduled %}
+                        <div class="list-group-item">
+                            {{s.start_at}} - {{s.end_at}}
+                            <footer class="text-muted">
+                                {{user.role}}
+                                {% if s.wage_multiplier != 1.0 %}
+                                <span class="badge text-bg-info">{{s.wage_multiplier}}x</span>
+                                {% endif %}
+                            </footer>
+
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
 
-
-
-            <div class="col-md h-100">
-                <h3>This year so far <span class="text-muted">£{{year.earnings}}</span></h3>
-                <div class="list-group h-75" style="overflow-y: auto;">
-                {% for s in year.shifts %}
-                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
-                {% endfor %}
-                </div>
-            </div>
         </div>
     </div>
     
