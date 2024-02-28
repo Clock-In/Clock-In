@@ -4,67 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Statistics</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
-<body>
-    Hello, {{user}}
-
-    {% if manager %}
-        
-    <h1>Manager</h1>
-
-
-    {% elif empty %}
+<body class="p-0">
+    {% if empty %}
 
     <h2>Nothing to display!</h2>
     <h3>Once you work some shifts, this page will display data...</h3>
 
-    {% else%}
-    <h3>Shift distribution</h3>
-
-    <div id="day_distribution"></div>
-
-    <p>Monday: {{ days.monday }}</p>
-    <p>Tuesday: {{ days.tuesday }}</p>
-    <p>Wednesday: {{ days.wednesday }}</p>
-    <p>Thursday: {{ days.thursday }}</p>
-    <p>Friday: {{ days.friday }}</p>
-    <p>Saturday: {{ days.saturday }}</p>
-    <p>Sunday: {{ days.sunday }}</p>
-
-    <h3>In the last 7 days</h3>
-    <h4>Total earnings: £{{week.earnings}}</h4>
-    {% for s in week.shifts %}
-    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
-    {% endfor %}
     
-    <h3>This month so far</h3>
-    <h4>Total earnings: £{{month.earnings}}</h4>
-    {% for s in month.shifts %}
-    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
-    {% endfor %}
-    
-    <h3>This year so far</h3>
-    <h4>Total earnings: £{{year.earnings}}</h4>
-    {% for s in year.shifts %}
-    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
-    {% endfor %}
-    
-    <h3>Total</h3>
-    <h4>Total earnings: £{{to_date.earnings}}</h4>
-    {% for s in to_date.shifts %}
-    <p>{{s.id}} -- {{user.role}}, Started at {{s.start_at}} Ended at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
-    {% endfor %}
-
-    <h2>Total hours worked to date: {{elapsed}}</h2>
-    <h2>Total earnings to date: £{{to_date.earnings}}</h2>
-    <hr>
-    <h3>Next scheduled shifts</h3>
-    {% for s in scheduled %}
-    <p>{{s.id}} -- {{user.role}}, Starts at {{s.start_at}} Ends at {{s.end_at}} Multiplier - {{s.wage_multiplier}}</p>
-    {% endfor %}
-    {% endif %}
+    {% else %}
     <a href="{% url 'profile' %}">Back</a>
+    <div class="container-fluid p-3">
+        <div class="row mb-5">
+            <div class="col-md">
+                
+                <div class="row align-items-center justify-content-md-center h-100">
+                    <div class="col-4 align-self-center text-center">
+                        <h1 class="display-1 text-center mb-0">£{{to_date.earnings}}</h1>
+                        <small class="text-muted">Earnings so far</small>
+                    </div>
+                    <div class="col-4 align-self-center justify-content-md-center text-center">
+                        <h1 class="display-1 text-center mb-0">{{elapsed}}</h1>
+                        <small class="text-muted">Hours worked</small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="row" style="height: 50vh">
+            <div class="col-md text-center">
+                <h3>Shift distribution</h3>
+
+                <div id="day_distribution"></div>
+            </div>
+
+            <div class="col-md h-100">
+                <h3>In the last 7 days <span class="text-muted">£{{week.earnings}}</span></h3>
+
+                <div class="list-group h-75" style="overflow-y: auto;">
+                {% for s in week.shifts %}
+                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
+                {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md h-100">
+                <h3>This month so far <span class="text-muted">£{{month.earnings}}</span></h3>
+                <div class="list-group h-75" style="overflow-y: auto;">
+                {% for s in month.shifts %}
+                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
+                {% endfor %}
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+
+            <div class="col-md h-100">
+                <h3>Next scheduled shifts</h3>
+                <div class="list-group h-75" style="overflow-y: auto;">
+                {% for s in scheduled %}
+                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
+                {% endfor %}
+                </div>
+            </div>
+
+
+
+            <div class="col-md h-100">
+                <h3>This year so far <span class="text-muted">£{{year.earnings}}</span></h3>
+                <div class="list-group h-75" style="overflow-y: auto;">
+                {% for s in year.shifts %}
+                    <div class="list-group-item">{{s.start_at}} - {{s.end_at}}<footer class="text-muted">{{user.role}}</footer></div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // set the dimensions and margins of the graph
         const margin = {top: 30, right: 30, bottom: 70, left: 60},
@@ -103,14 +122,14 @@
 
         // Add Y axis
         const y = d3.scaleLinear()
-        .domain([0, 3])
+        .domain([0, 10])
         .rangeRound([ height, 0]);
 
         // svg.append("g")
         // .call(d3.axisLeft(y))
 
         // Bars
-        svg.selectAll("mybar")
+        svg.selectAll("bar")
         .data(data)
         .join("rect")
         .attr("x", d => x(d.day))
@@ -119,5 +138,6 @@
         .attr("height", d => height - y(d.value))
         .attr("fill", "#69b3a2")
     </script>
+    {% endif %}
 </body>
 </html>

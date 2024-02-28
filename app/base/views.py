@@ -5,6 +5,7 @@ from django.http import HttpRequest
 from django.shortcuts import render
 import calendar
 import datetime
+from statistics import mean, stdev
 
 from base import models
 from base.auth import manager_only
@@ -134,14 +135,54 @@ def statistics(request):
 
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
 
-    if all_shifts.count() == 0:
-        return render(request, "user/statistics.html", {"empty": True})
-    
     scheduled = all_shifts.filter(end_at__range=[today, datetime.datetime.max])
     to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today])
     past_week = all_shifts.filter(end_at__range=[last_week, today])
     this_month_to_date = all_shifts.filter(end_at__range=[month_start, today])
     this_year_to_date = all_shifts.filter(end_at__range=[year_start,today])
+     
+    if request.user.is_staff:
+        all_workers = models.User.objects.filter(is_staff=False)
+        
+        worker_distribution = []
+        for worker in all_workers:
+            worker_shifts = models.Shift.objects.filter(assigned_to=worker.id)
+            worker_info = {}
+            worker_info["name"] = worker.name
+            worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
+            worker_info["monday"] = worker_shifts.filter(start_at__week_day=2).count()
+            worker_info["tuesday"] = worker_shifts.filter(start_at__week_day=3).count()
+            worker_info["wednesday"] = worker_shifts.filter(start_at__week_day=4).count()
+            worker_info["thursday"] = worker_shifts.filter(start_at__week_day=5).count()
+            worker_info["friday"] = worker_shifts.filter(start_at__week_day=6).count()
+            worker_info["saturday"] = worker_shifts.filter(start_at__week_day=7).count()
+            worker_info["total"] = worker_shifts.count()
+            worker_distribution.append(worker_info)
+
+        weekend_fairness = {}
+        weekend_fairness["workers"] = []
+        for worker in worker_distribution:
+            weekend_fairness["workers"].append({"name": worker["name"], "score":worker["saturday"] + worker["sunday"] * 1.5})
+        weekend_fairness["mean"] = mean([w["score"] for w in weekend_fairness["workers"]])
+        weekend_fairness["stdev"] = stdev([w["score"] for w in weekend_fairness["workers"]])
+
+        fairness = {}
+        fairness["workers"] = []
+        for worker in worker_distribution:
+            fairness["workers"].append({"name": worker["name"], "total": worker["total"]})
+        fairness["mean"] = mean([w["total"] for w in fairness["workers"]])
+        fairness["stdev"] = stdev([w["total"] for w in fairness["workers"]])
+
+        return render(request, "user/manager_statistics.html",{
+            "employee_count": all_workers.count(),
+            "worker_distribution": worker_distribution,
+            "weekend_fairness": weekend_fairness,
+            "fairness": fairness
+            })
+    
+    if all_shifts.count() == 0:
+        return render(request, "user/statistics.html", {"empty": True})
+    
          
     day_distribution = {}
     day_distribution["sunday"] = to_date.filter(start_at__week_day=1).count()
@@ -198,10 +239,10 @@ def statistics(request):
         {
             "user": request.user,
             "shifts": all_shifts,
-            "week": {"shifts": past_week, "earnings": (round(earnings_this_week,2)) if earnings_to_date != None else 0 }, 
-            "month": {"shifts": this_month_to_date, "earnings": (round(earnings_this_month,2)) if earnings_to_date != None else 0 },
-            "year": {"shifts": this_year_to_date, "earnings": (round(earnings_this_year,2)) if earnings_to_date != None else 0 }, 
-            "to_date": {"shifts": to_date, "earnings":(round(earnings_to_date,2)) if earnings_to_date != None else 0 },
+            "week": {"shifts": past_week, "earnings": "{:.2f}".format(earnings_this_week) if earnings_to_date != None else 0 }, 
+            "month": {"shifts": this_month_to_date, "earnings":  "{:.2f}".format(earnings_this_month) if earnings_to_date != None else 0 },
+            "year": {"shifts": this_year_to_date, "earnings":  "{:.2f}".format(earnings_this_year) if earnings_to_date != None else 0 }, 
+            "to_date": {"shifts": to_date, "earnings":  "{:.2f}".format(earnings_to_date) if earnings_to_date != None else 0 },
             "scheduled": scheduled,
             "elapsed":time_elapsed, 
             "days": day_distribution,
