@@ -57,20 +57,10 @@
       
     }
 
-    a {
-      color: white;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-      font-weight: bold;
-    }
-
   </style>
 </head>
 <body>
-  {% include 'Navigation_Bar.html' %}
+  {% include 'Navigation_Bar.html' with active="timetable" %}
   <div class="calendar">
     <a href="{% url 'timetable_week' %}">See my week</a>
     <h2 class="month-header" id="month-header">{{month}}</h2>

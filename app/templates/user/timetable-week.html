@@ -67,7 +67,7 @@ a:hover {
 }
 </style>
 <body>
-  {% include 'Navigation_Bar.html' %}
+  {% include 'Navigation_Bar.html' with active="timetable" %}
   <div class="calendar">
     <a href="{% url 'timetable' %}">See whole month</a>
     <h2 class="month-header" id="month-header">{{week_title}}</h2>
