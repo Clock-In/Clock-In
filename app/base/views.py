@@ -144,13 +144,13 @@ def statistics(request):
     this_year_to_date = all_shifts.filter(end_at__range=[year_start,today])
          
     day_distribution = {}
-    day_distribution["monday"] = to_date.filter(start_at__week_day=3).count()
-    day_distribution["tuesday"] = to_date.filter(start_at__week_day=4).count()
-    day_distribution["wednesday"] = to_date.filter(start_at__week_day=5).count()
-    day_distribution["thursday"] = to_date.filter(start_at__week_day=6).count()
-    day_distribution["friday"] = to_date.filter(start_at__week_day=7).count()
-    day_distribution["saturday"] = to_date.filter(start_at__week_day=1).count()
-    day_distribution["sunday"] = to_date.filter(start_at__week_day=2).count()
+    day_distribution["sunday"] = to_date.filter(start_at__week_day=1).count()
+    day_distribution["monday"] = to_date.filter(start_at__week_day=2).count()
+    day_distribution["tuesday"] = to_date.filter(start_at__week_day=3).count()
+    day_distribution["wednesday"] = to_date.filter(start_at__week_day=4).count()
+    day_distribution["thursday"] = to_date.filter(start_at__week_day=5).count()
+    day_distribution["friday"] = to_date.filter(start_at__week_day=6).count()
+    day_distribution["saturday"] = to_date.filter(start_at__week_day=7).count()
 
 
     calculated_to_date = to_date.annotate(
