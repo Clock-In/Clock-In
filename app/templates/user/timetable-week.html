@@ -67,7 +67,7 @@ a:hover {
 }
 </style>
 <body>
-  {% include 'Navigation_Bar.html' %}
+  {% include 'Navigation_Bar.html' with active="timetable" %}
   <div class="calendar">
     {% if buttons != 2 %}
     <button><a href="{% url 'timetable_week' 2 %}">past</a></button>

@@ -1,4 +1,16 @@
-<p>Welcome {{shift.assigned_to}}</p>
-<p>your shift starts at {{shift.start_at}}</p>
-<p>and ends at {{shift.end_at}}</p>
-<button>SWAP!</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My shift on {{shift.start_at}}</title>
+</head>
+<body>
+    {% include 'Navigation_Bar.html' with active="timetable" %}
+    <p>Welcome {{shift.assigned_to}}</p>
+    <p>your shift starts at {{shift.start_at}}</p>
+    <p>and ends at {{shift.end_at}}</p>
+    <button>SWAP!</button>
+</body>
+</html>
+

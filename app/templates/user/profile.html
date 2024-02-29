@@ -1,10 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    {% include 'Navigation_Bar.html' with active="profile" %}
+    <h1>Welcome {{ user.name }}</h1>
+    <h2>Options:</h2>
+    <ul>
+        <li><a href="{% url 'logout' %}">Log out</a></li>
+        <li><a href="{% url 'password_change' %}">Change password</a></li>
+        <li><a href="{% url 'timetable' %}">Go to my Timetable</a></li>
+        <li><a href="{% url 'settings' %}">Settings</a></li>
+        <li><a href="{% url 'statistics' %}">Statistics</a></li>
+    </ul>
+</body>
+</html>
 
-<h1>Welcome {{ user.name }}</h1>
-<h2>Options:</h2>
-<ul>
-    <li><a href="{% url 'logout' %}">Log out</a></li>
-    <li><a href="{% url 'password_change' %}">Change password</a></li>
-    <li><a href="{% url 'timetable' %}">Go to my Timetable</a></li>
-    <li><a href="{% url 'settings' %}">Settings</a></li>
-    <li><a href="{% url 'statistics' %}">Statistics</a></li>
-</ul>
+
+
