@@ -11,7 +11,7 @@ from base import models
 from base.auth import manager_only
 from clockIn import utils
 
-from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm, ShiftSwapRequestForm
+from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm, ShiftSwapAcceptForm, ShiftSwapRequestForm
 
 from base.forms import LoginForm
 from .forms import ExtendedCustomUserChangeForm
@@ -263,6 +263,36 @@ def shift_swap_request(request, pk):
         {
             "user": request.user,
             "form": form
+        }
+    )
+
+@login_required
+def view_shift_requests(request):
+    form = ShiftSwapAcceptForm()
+    if request.method == "POST":
+        form = ShiftSwapAcceptForm(request.POST)
+        if form.is_valid():
+            req: models.ShiftSwapRequest = form.cleaned_data["request"] # type: ignore
+            shift: models.Shift = req.shift # type: ignore
+            if shift.role == request.user.role and shift.start_at > datetime.datetime.now().astimezone():
+                req.active = False
+                req.save()
+                shift.completed_by = request.user
+                shift.save()
+
+    reqs = models.ShiftSwapRequest.objects\
+            .filter(shift__role=request.user.role)\
+            .filter(active=True)\
+            .filter(shift__start_at__gt=datetime.datetime.now())\
+            .order_by('shift__start_at')
+
+    return render(
+        request, 'shifts/swap_list.html',
+        {
+            "user": request.user,
+            "num_requests": len(reqs),
+            "requests": reqs,
+            "form": form,
         }
     )
 

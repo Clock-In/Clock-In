@@ -1,0 +1,61 @@
+<head>
+    <style>
+        .swap-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .swap-list tr {
+            border-bottom: .1rem solid black;
+        }
+
+        .swap-list td {
+            text-align: center;
+        }
+
+        #accept-form {
+            display: none;
+        }
+
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            Array.from(document.getElementsByClassName('accept-btn')).forEach(btn => {
+                btn.addEventListener('click', evt => {
+                    const { reqid } = btn.dataset;
+                    document.getElementById('id_request').value = reqid
+                    document.getElementById('accept-form').submit();
+                });
+            });
+        });
+    </script>
+
+
+</head>
+{% if num_requests %}
+There are {{num_requests}} shifts available:
+<table class="swap-list">
+    <tr>
+        <th>Start</th>
+        <th>End</th>
+        <th>Requested by</th>
+        <th>Message</th>
+        <th>Actions</th>
+    </tr>
+    {% for req in requests %}
+    <tr>
+        <td>{{req.shift.start_at}}</td>
+        <td>{{req.shift.end_at}}</td>
+        <td>{{req.shift.assigned_to}}</td>
+        <td>{{req.message}}</td>
+        <td><button class="accept-btn" data-reqid="{{req.id}}">Accept</button></td>
+    </tr>
+    {% endfor %}
+</table>
+<form method="POST" id="accept-form">
+    {% csrf_token %}
+    {{form}}
+</form>
+{% else %}
+There aren't any shifts available currently.
+{% endif %}

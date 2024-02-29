@@ -1,4 +1,5 @@
 
+import datetime
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.widgets import AutocompleteSelect
@@ -85,4 +86,12 @@ class ShiftSwapRequestForm(forms.ModelForm):
     class Meta:
         model = ShiftSwapRequest
         fields = ('shift', 'message',)
+
+
+class ShiftSwapAcceptForm(forms.Form):
+    request = forms.ModelChoiceField(
+        queryset=ShiftSwapRequest.objects.filter(active=True).filter(
+            shift__start_at__gt=datetime.datetime.now()
+        )
+    )
 
