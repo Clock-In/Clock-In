@@ -6,6 +6,7 @@ from django.shortcuts import render
 import calendar
 import datetime
 from statistics import mean, stdev
+from dateutil.relativedelta import relativedelta
 
 from base import models
 from base.auth import manager_only
@@ -19,6 +20,7 @@ from django.db.models import Sum, F,FloatField, ExpressionWrapper
 from django.db.models.functions import Cast
 
 weekskip_global = 0
+monthskip_global = 0
 
 @login_required
 def profile(request: HttpRequest):
@@ -35,13 +37,24 @@ def my_shift(request,pk):
 
 
 @login_required
-def time_table_page(request):
-    current_date = datetime.datetime.now()
+def time_table_page(request, weekskip):
+
+    global monthskip_global
+
+    if weekskip == 2:
+        weekskip = -1
+    elif weekskip == 0:
+        monthskip_global = 0
+    else:
+        pass
+
+    monthskip_global = monthskip_global + weekskip
+    current_date = (datetime.datetime.now() + relativedelta(months=monthskip_global))
 
     user = request.user
     
     #MONTH HANDLING
-    monthNum = current_date.month
+    monthNum = (current_date.month)
     months = ["January","February","March","April","May","June",
     "July","August","September","October","November","December"]
     
@@ -69,8 +82,9 @@ def time_table_page(request):
         shift_day = 0
         for shift in user_shifts:
             start = (shift.start_at)   
+            print(start)
 
-            if current_day.day == start.day:
+            if ((current_day.day == start.day) & (current_day.month == start.month) & (current_day.year == start.year)):
                 shift_day = shift
 
         dayi = {'date':day,'weekday':current_weekday,'shift':shift_day}
@@ -78,7 +92,7 @@ def time_table_page(request):
 
     weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
     
-    return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user})
+    return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user,'year':year})
 
 def timetable_week(request, weekskip):
     global weekskip_global
@@ -92,7 +106,7 @@ def timetable_week(request, weekskip):
 
     weekskip_global = weekskip_global + weekskip
 
-    current_date = datetime.datetime.now()
+    current_date = (datetime.datetime.now() + relativedelta(weeks=weekskip_global))
     user = request.user
     monthNum = current_date.month
     months = ["January","February","March","April","May","June",
@@ -102,47 +116,31 @@ def timetable_week(request, weekskip):
     day = current_date.day
     hour = current_date.hour
     num_days_in_month = calendar.monthrange(year, monthNum)[1]
-    dayList = []
-    first_day = current_date.replace(day=1)
-    first_day = first_day.weekday()
-    for i in range(first_day):
-        dayi = {'date':"",'weekday':i,'shift': 0}
-        dayList.append(dayi)
+    week = []
+    weekListFinal = []
+
+    for i in range(6):
+        dayi = {'date':(current_date + relativedelta(days=i)).date,'weekday':i,'shift': 0}
+        week.append(dayi)
     user_shifts = models.Shift.objects.filter(assigned_to=request.user)
-    for day in range(1,num_days_in_month + 1):
-        current_day = current_date.replace(day=day)
+    for day in range(len(week)):
+        current_day = current_date + relativedelta(days=day)
         current_weekday = current_day.weekday()
         shift_day = 0
         for shift in user_shifts:
             start = (shift.start_at)   
-            if current_day.day == start.day:
+            if ((current_day.day == start.day) & (current_day.month == start.month) & (current_day.year == start.year)):
                 shift_day = shift
-        dayi = {'date':day,'weekday':current_weekday,'shift':shift_day}
-        dayList.append(dayi)
-    weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
-
-    
-
-    actual_week = {}
-    noButtons = 0 #1 = no right ,2 = no left
-
-    for week in weeks:
-        for day in week:
-            if day['date'] == current_date.day + (weekskip_global*7):
-                actual_week = week
-
-    if actual_week == weeks[-1]:
-        noButtons = 1
-    elif actual_week == weeks[0]:
-        noButtons = 2
-    else:
-        pass
+        dayi = {'date':current_day.day,'weekday':current_weekday,'shift':shift_day}
+        weekListFinal.append(dayi)
 
 
-    start_end = f"{month} week {actual_week[0]['date']} to {actual_week[-1]['date']}"
+
+
+    start_end = f"{month} week {weekListFinal[0]['date']} to {weekListFinal[-1]['date']}"
     print(start_end)
 
-    return render(request, 'user/timetable-week.html',{'month':month,'week':actual_week,'user':user,'week_title':start_end,'buttons':noButtons})
+    return render(request, 'user/timetable-week.html',{'month':month,'week':weekListFinal,'user':user,'week_title':start_end})
     
 
 

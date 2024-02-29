@@ -62,8 +62,8 @@
 <body>
   {% include 'Navigation_Bar.html' with active="timetable" %}
   <div class="calendar">
-    <a href="{% url 'timetable_week' 0 %}">See my week</a>
-    <h2 class="month-header" id="month-header">{{month}}</h2>
+    <button><a href="{% url 'timetable' 2 %}">Past</a></button><a href="{% url 'timetable_week' 0 %}">See my week</a><button><a href="{% url 'timetable' 1 %}">Next</a></button>
+    <h2 class="month-header" id="month-header">{{month}} {{year}}</h2>
     <table>
       <thead>
         <tr>
