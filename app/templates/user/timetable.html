@@ -72,7 +72,7 @@
 <body>
   {% include 'Navigation_Bar.html' %}
   <div class="calendar">
-    <a href="{% url 'timetable_week' %}">See my week</a>
+    <a href="{% url 'timetable_week' 0 %}">See my week</a>
     <h2 class="month-header" id="month-header">{{month}}</h2>
     <table>
       <thead>

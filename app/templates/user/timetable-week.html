@@ -69,7 +69,16 @@ a:hover {
 <body>
   {% include 'Navigation_Bar.html' %}
   <div class="calendar">
-    <a href="{% url 'timetable' %}">See whole month</a>
+    {% if buttons != 2 %}
+    <button><a href="{% url 'timetable_week' 2 %}">past</a></button>
+    {% endif %}
+    <button><a href="{% url 'timetable' %}">See whole month</a></button>
+    {% if buttons != 1 %}
+    <button><a href="{% url 'timetable_week' 1 %}">next</a></button>
+    {% endif %}
+
+    
+
     <h2 class="month-header" id="month-header">{{week_title}}</h2>
     <table>
 

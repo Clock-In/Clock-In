@@ -17,6 +17,8 @@ from .forms import ExtendedCustomUserChangeForm
 from django.db.models import Sum, F,FloatField, ExpressionWrapper
 from django.db.models.functions import Cast
 
+weekskip_global = 0
+
 @login_required
 def profile(request: HttpRequest):
     return render(request, "user/profile.html", {"user": request.user}) # type: ignore
@@ -77,7 +79,17 @@ def time_table_page(request):
     
     return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user})
 
-def timetable_week(request):
+def timetable_week(request, weekskip):
+    global weekskip_global
+
+    if weekskip == 2:
+        weekskip = -1
+    elif weekskip == 0:
+        weekskip_global = 0
+    else:
+        pass
+
+    weekskip_global = weekskip_global + weekskip
 
     current_date = datetime.datetime.now()
     user = request.user
@@ -108,19 +120,28 @@ def timetable_week(request):
         dayList.append(dayi)
     weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
 
-    print(weeks)
+    
 
     actual_week = {}
+    noButtons = 0 #1 = no right ,2 = no left
 
     for week in weeks:
         for day in week:
-            if day['date'] == current_date.day:
+            if day['date'] == current_date.day + (weekskip_global*7):
                 actual_week = week
 
-    start_end = f"{month} week {actual_week[0]['date']} to {actual_week[len(actual_week)-1]['date']}"
+    if actual_week == weeks[-1]:
+        noButtons = 1
+    elif actual_week == weeks[0]:
+        noButtons = 2
+    else:
+        pass
+
+
+    start_end = f"{month} week {actual_week[0]['date']} to {actual_week[-1]['date']}"
     print(start_end)
 
-    return render(request, 'user/timetable-week.html',{'month':month,'week':actual_week,'user':user,'week_title':start_end})
+    return render(request, 'user/timetable-week.html',{'month':month,'week':actual_week,'user':user,'week_title':start_end,'buttons':noButtons})
     
 
 
