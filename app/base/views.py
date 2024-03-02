@@ -19,8 +19,6 @@ from .forms import ExtendedCustomUserChangeForm
 from django.db.models import Sum, F,FloatField, ExpressionWrapper
 from django.db.models.functions import Cast
 
-weekskip_global = 0
-monthskip_global = 0
 
 @login_required
 def profile(request: HttpRequest):
@@ -39,7 +37,7 @@ def my_shift(request,pk):
 @login_required
 def time_table_page(request, weekskip):
 
-    global monthskip_global
+    monthskip_global = request.user.calendar_place
 
     if weekskip == 2:
         weekskip = -1
@@ -49,6 +47,8 @@ def time_table_page(request, weekskip):
         pass
 
     monthskip_global = monthskip_global + weekskip
+    request.user.calendar_place = monthskip_global
+    request.user.save()
     current_date = (datetime.datetime.now() + relativedelta(months=monthskip_global))
 
     user = request.user
@@ -95,7 +95,8 @@ def time_table_page(request, weekskip):
     return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user,'year':year})
 
 def timetable_week(request, weekskip):
-    global weekskip_global
+
+    weekskip_global = request.user.calendar_place
 
     if weekskip == 2:
         weekskip = -1
@@ -105,6 +106,8 @@ def timetable_week(request, weekskip):
         pass
 
     weekskip_global = weekskip_global + weekskip
+    request.user.calendar_place = weekskip_global
+    request.user.save()
 
     current_date = (datetime.datetime.now() + relativedelta(weeks=weekskip_global))
     user = request.user
@@ -119,12 +122,13 @@ def timetable_week(request, weekskip):
     week = []
     weekListFinal = []
 
-    for i in range(6):
+    for i in range(0,7):
+        print(i)
         dayi = {'date':(current_date + relativedelta(days=i)).date,'weekday':i,'shift': 0}
         week.append(dayi)
     user_shifts = models.Shift.objects.filter(assigned_to=request.user)
     for day in range(len(week)):
-        current_day = current_date + relativedelta(days=day)
+        current_day = current_date + relativedelta(days=day + 1)
         current_weekday = current_day.weekday()
         shift_day = 0
         for shift in user_shifts:
@@ -133,8 +137,6 @@ def timetable_week(request, weekskip):
                 shift_day = shift
         dayi = {'date':current_day.day,'weekday':current_weekday,'shift':shift_day}
         weekListFinal.append(dayi)
-
-
 
 
     start_end = f"{month} week {weekListFinal[0]['date']} to {weekListFinal[-1]['date']}"
