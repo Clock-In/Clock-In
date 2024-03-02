@@ -68,7 +68,7 @@ def time_table_page(request, weekskip):
 
     first_day = current_date.replace(day=1)
     first_day = first_day.weekday()
-    for i in range(first_day):
+    for i in range(first_day + 1):
         dayi = {'date':"",'weekday':i,'shift': 0}
         dayList.append(dayi)
 
