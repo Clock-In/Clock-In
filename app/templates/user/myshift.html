@@ -10,7 +10,9 @@
     <p>Welcome {{shift.assigned_to}}</p>
     <p>your shift starts at {{shift.start_at}}</p>
     <p>and ends at {{shift.end_at}}</p>
-    <button>SWAP!</button>
+    <a href="/shift/{{shift.id}}/swap">
+        <button>Swap</button>
+    </a>
 </body>
 </html>
 

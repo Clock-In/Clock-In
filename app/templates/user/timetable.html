@@ -58,33 +58,56 @@
     }
 
   </style>
+  <script>
+    const baseDate = new Date('{{ start_date.isoformat }}');
+    const dateFmtOpts = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    };
+    function changeMonth(direction) {
+        const query = new URLSearchParams(window.location.search);
+        baseDate.setUTCMonth(baseDate.getUTCMonth() + direction);
+        query.set('month_start', Math.floor(baseDate.getTime() / 1000));
+        window.location.search = query.toString();
+    }
+    window.addEventListener('DOMContentLoaded', () => document.getElementById('start_date').innerHTML = baseDate.toLocaleDateString(navigator.languages, dateFmtOpts));
+  </script>
 </head>
 <body>
   {% include 'Navigation_Bar.html' with active="timetable" %}
   <div class="calendar">
-    <button><a href="{% url 'timetable' 2 %}">Past</a></button><a href="{% url 'timetable_week' 0 %}">See my week</a><button><a href="{% url 'timetable' 1 %}">Next</a></button>
-    <h2 class="month-header" id="month-header">{{month}} {{year}}</h2>
+        <div class="month-header">
+            <div class="week-selector">
+                <button id="week-back" onclick="changeMonth(-1)">&lt</button>
+                <span id="start_date"></span>
+                <button id="week-forward" onclick="changeMonth(1)">&gt</button>
+            </div>
+            <button><a href="{% url 'timetable_week' %}">See weekly timetable</a></button>
+        </div>
     <table>
       <thead>
         <tr>
-          <th>Sun</th>
           <th>Mon</th>
           <th>Tue</th>
           <th>Wed</th>
           <th>Thu</th>
           <th>Fri</th>
           <th>Sat</th>
+          <th>Sun</th>
         </tr>
       </thead>
       <tbody>
 
        {% for week in weeks %}
         <tr>
-          {% for day in week%}
-            {% if day.shift == 0 %}
-              <td>{{day.date}}</td>
+          {% for day, shifts in week %}
+            {% if not shifts %}
+              <td>{{day.day}}</td>
             {% else %}
-              <td class="shiftDay"><a href="{% url 'my_shift' day.shift.id %}">{{day.date}}</a></td>
+            <!-- TODO: is it best to link to the page for the first shift or should there be a separate day page? -->
+              <td class="shiftDay"><a href="{% url 'my_shift' shifts.0.id %}">{{day.day}}</a></td>
             {% endif %}
           {% endfor %}
         </tr>

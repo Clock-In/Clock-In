@@ -54,9 +54,11 @@ auth_urls = [
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include(auth_urls)),
-    path('timetable/<int:weekskip>/', views.time_table_page, name="timetable"),
-    path('timetable/week<int:weekskip>', views.timetable_week, name="timetable_week"),
+    path('timetable/', views.timetable_month, name="timetable"),
+    path('timetable/week/', views.timetable_week, name="timetable_week"),
     path('timetable/create/', views.create_timetable, name="create_timetable"),
     path('my_shift/<str:pk>/', views.my_shift, name="my_shift"),
     path('statistics/', views.statistics, name="statistics"),
+    path('shift/<str:pk>/swap/', views.shift_swap_request, name="swap_request"),
+    path('shift/available/', views.view_shift_requests, name="view_requests"),
 ]

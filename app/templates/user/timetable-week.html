@@ -1,122 +1,150 @@
 <style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-}
-.calendar {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
 
-tr {
-  padding: 0px;
-}
+    .calendar {
+        margin: 0 auto;
+        padding: 20px;
+    }
 
-th, td {
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #ddd;
-}
-th {
-  background-color: #2b23a4;
-  color: white;
-}
-td {
-  cursor: pointer;
-}
-.selected {
-  background-color: #3498db;
-  color: #fff;
-}
-.month-header {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 24px;
-}
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-.month-header {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 24px;
-}
+    tr {
+        padding: 0px;
+    }
 
-.shiftDay {
+    th,
+    td {
+        padding: 10px;
+        text-align: center;
+        border: 1px solid #ddd !important;
+    }
 
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #ddd;
-  background-color: #2b23a4;
-  color: white;
-  
-}
+    th {
+        background-color: #2b23a4;
+        color: white;
+    }
 
-a {
-  color: white;
-  text-decoration: none;
-}
+    td {
+        cursor: pointer;
+    }
 
-a:hover {
-  text-decoration: underline;
-  font-weight: bold;
-}
+    .month-header {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    a {
+        color: white;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+        font-weight: bold;
+    }
+
+    .day-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .shift-container {
+        border: 1px solid black;
+    }
+    .week-selector {
+        margin-bottom: 1rem;
+    }
 </style>
+
+<script>
+    const baseDate = new Date('{{ start_date.isoformat }}');
+    const dateFmtOpts = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    };
+    function changeWeek(direction) {
+        const query = new URLSearchParams(window.location.search);
+        baseDate.setDate(baseDate.getDate() + (7 * direction));
+        query.set('week_start', Math.floor(baseDate.getTime() / 1000));
+        window.location.search = query.toString();
+    }
+    window.addEventListener('DOMContentLoaded', () => document.getElementById('start_date').innerHTML = baseDate.toLocaleDateString(navigator.languages, dateFmtOpts));
+</script>
+
 <body>
-  {% include 'Navigation_Bar.html' with active="timetable" %}
-  <div class="calendar">
+    {% include 'Navigation_Bar.html' with active="timetable" %}
+    <div class="calendar">
+        <div class="month-header">
+            <div class="week-selector">
+                <button id="week-back" onclick="changeWeek(-1)">&lt</button>
+                <span id="start_date"></span>
+                <button id="week-forward" onclick="changeWeek(1)">&gt</button>
+            </div>
+            <button><a href="{% url 'timetable' %}">See whole month</a></button>
+        </div>
 
-    <button><a href="{% url 'timetable_week' 2 %}">past</a></button>
+        <h2 class="month-header" id="month-header">{{week_title}}</h2>
+        <table>
+            <thead>
+                <tr>
+                    {% for day in week %}
+                    <th>{{day.date}}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    {% for day in shifts %}
+                    <td>
+                        <div class="day-container">
+                            {% if not day %}
+                            <span>No shifts</span>
+                            {% else %}
+                            {% for shift in day %}
+                            <a href="{% url 'my_shift' shift.id %}">
+                                <div class="shift-container">
+                                    <script>
+                                        document.write(
+                                            new Date('{{shift.start_at.isoformat}}').toLocaleTimeString(
+                                                navigator.languages, {
+                                                    hour: '2-digit', minute: '2-digit'
+                                                }));
+                                    </script>
+                                    -
+                                    <script>
+                                        document.write(
+                                            new Date('{{shift.end_at.isoformat}}').toLocaleTimeString(
+                                                navigator.languages, {
+                                                    hour: '2-digit', minute: '2-digit'
+                                                }));
+                                    </script>
+                                    {% if shift.wage_multiplier != 1 %}
+                                    <br>
+                                    <span>{{shift.wage_multiplier}}&times; pay</span>
+                                    {% endif %}
+                                </div>
+                            </a>
+                            {% endfor %}
+                            {% endif %}
+                            </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
 
-    <button><a href="{% url 'timetable' 0 %}">See whole month</a></button>
 
-    <button><a href="{% url 'timetable_week' 1 %}">next</a></button>
-
-
-    
-
-    <h2 class="month-header" id="month-header">{{week_title}}</h2>
-    <table>
-
-      {% for day in week %}
-      <th>{{day.date}}</th>
-      {% endfor %}
-      <tr>
-      {% for day in week %}
-      {% if day.shift == 0 %}
-        <td></td>
-      {% else %}
-        <td>Your shift starts at:</td>
-      {% endif %}
-      {% endfor %}
-      </tr>
-      <tr>
-        {% for day in week %}
-        {% if day.shift == 0 %}
-          <td>nothing today</td>
-        {% else %}
-          <td class=""><a href="{% url 'my_shift' day.shift.id %}">{{day.shift.start_at}}</a></td>
-        {% endif %}
-        {% endfor %}
-        </tr>
-        <tr>
-          {% for day in week %}
-          {% if day.shift == 0 %}
-            <td></td>
-          {% else %}
-          <td class=""><a href="{% url 'my_shift' day.shift.id %}">{{day.shift.end_at}}</a></td>
-          {% endif %}
-          {% endfor %}
-          </tr>
-        
-      
-      
-      
-    </table>
-  </div>
+        </table>
+    </div>
 </body>
+
 </html>

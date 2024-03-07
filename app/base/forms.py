@@ -1,4 +1,5 @@
 
+import datetime
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.widgets import AutocompleteSelect
@@ -6,7 +7,7 @@ from django.contrib.auth.admin import UserChangeForm, UserCreationForm
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.utils.translation import gettext_lazy as _
 
-from base.models import User, Shift, Role
+from base.models import ShiftSwapRequest, User, Shift, Role
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -74,5 +75,23 @@ class LoginForm(AuthenticationForm):
         label=_("Password"),
         strip=False,
         widget=forms.PasswordInput(attrs={"autocomplete": "current-password", "class": "inputs", "placeholder": "password"}),
+    )
+
+class ShiftSwapRequestForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['shift'].required = False
+
+    class Meta:
+        model = ShiftSwapRequest
+        fields = ('shift', 'message',)
+
+
+class ShiftSwapAcceptForm(forms.Form):
+    request = forms.ModelChoiceField(
+        queryset=ShiftSwapRequest.objects.filter(active=True).filter(
+            shift__start_at__gt=datetime.datetime.now()
+        )
     )
 

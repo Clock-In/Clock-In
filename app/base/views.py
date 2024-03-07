@@ -2,25 +2,23 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.views import LoginView
 from django.http import HttpRequest
+from django.http.request import QueryDict
 from django.shortcuts import render
-import calendar
 import datetime
 from statistics import mean, stdev
-from dateutil.relativedelta import relativedelta
 
 from base import models
+from base import queries
 from base.auth import manager_only
 from clockIn import utils
 
-from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm
+from .forms import ExtendedCustomUserChangeForm, ShiftCreationForm, ShiftSwapAcceptForm, ShiftSwapRequestForm
 
 from base.forms import LoginForm
 from .forms import ExtendedCustomUserChangeForm
 from django.db.models import Sum, F,FloatField, ExpressionWrapper
 from django.db.models.functions import Cast
 
-weekskip_global = 0
-monthskip_global = 0
 
 @login_required
 def profile(request: HttpRequest):
@@ -37,112 +35,40 @@ def my_shift(request,pk):
 
 
 @login_required
-def time_table_page(request, weekskip):
+def timetable_month(request):
 
-    global monthskip_global
-
-    if weekskip == 2:
-        weekskip = -1
-    elif weekskip == 0:
-        monthskip_global = 0
-    else:
-        pass
-
-    monthskip_global = monthskip_global + weekskip
-    current_date = (datetime.datetime.now() + relativedelta(months=monthskip_global))
-
-    user = request.user
+    start_date = utils.query_timestamp(request, 'month_start')
+    date, grouped_shifts = queries.get_shifts_for_month(start_date,
+                                           for_user=request.user,
+                                           fmt=queries.format_shift_for_user
+                                           )
+    month = date.strftime("%b")
     
-    #MONTH HANDLING
-    monthNum = (current_date.month)
-    months = ["January","February","March","April","May","June",
-    "July","August","September","October","November","December"]
-    
-    month = months[monthNum-1]
+    return render(request, 'user/timetable.html', {
+        'month': month,
+        'start_date': date,
+        'weeks': grouped_shifts,
+        'user': request.user,
+        'year': date.year,
+    })
 
-    year = current_date.year
-    day = current_date.day
-    hour = current_date.hour
-    num_days_in_month = calendar.monthrange(year, monthNum)[1]
-    dayList = []
+def timetable_week(request):
 
-    first_day = current_date.replace(day=1)
-    first_day = first_day.weekday()
-    for i in range(first_day):
-        dayi = {'date':"",'weekday':i,'shift': 0}
-        dayList.append(dayi)
+    start_date = utils.query_timestamp(request, 'week_start')
+    date, grouped_shifts = queries.get_shifts_for_week(start_date,
+                                                       for_user=request.user,
+                                                       fmt=queries.format_shift_for_user
+                                                       )
 
-    user_shifts = models.Shift.objects.filter(assigned_to=request.user)
-
-    
-    
-    for day in range(1,num_days_in_month + 1):
-        current_day = current_date.replace(day=day)
-        current_weekday = current_day.weekday()
-        shift_day = 0
-        for shift in user_shifts:
-            start = (shift.start_at)   
-            print(start)
-
-            if ((current_day.day == start.day) & (current_day.month == start.month) & (current_day.year == start.year)):
-                shift_day = shift
-
-        dayi = {'date':day,'weekday':current_weekday,'shift':shift_day}
-        dayList.append(dayi)
-
-    weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
-    
-    return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user,'year':year})
-
-def timetable_week(request, weekskip):
-    global weekskip_global
-
-    if weekskip == 2:
-        weekskip = -1
-    elif weekskip == 0:
-        weekskip_global = 0
-    else:
-        pass
-
-    weekskip_global = weekskip_global + weekskip
-
-    current_date = (datetime.datetime.now() + relativedelta(weeks=weekskip_global))
-    user = request.user
-    monthNum = current_date.month
-    months = ["January","February","March","April","May","June",
-    "July","August","September","October","November","December"]
-    month = months[monthNum-1]
-    year = current_date.year
-    day = current_date.day
-    hour = current_date.hour
-    num_days_in_month = calendar.monthrange(year, monthNum)[1]
-    week = []
-    weekListFinal = []
-
-    for i in range(6):
-        dayi = {'date':(current_date + relativedelta(days=i)).date,'weekday':i,'shift': 0}
-        week.append(dayi)
-    user_shifts = models.Shift.objects.filter(assigned_to=request.user)
-    for day in range(len(week)):
-        current_day = current_date + relativedelta(days=day)
-        current_weekday = current_day.weekday()
-        shift_day = 0
-        for shift in user_shifts:
-            start = (shift.start_at)   
-            if ((current_day.day == start.day) & (current_day.month == start.month) & (current_day.year == start.year)):
-                shift_day = shift
-        dayi = {'date':current_day.day,'weekday':current_weekday,'shift':shift_day}
-        weekListFinal.append(dayi)
-
-
-
-
-    start_end = f"{month} week {weekListFinal[0]['date']} to {weekListFinal[-1]['date']}"
-    print(start_end)
-
-    return render(request, 'user/timetable-week.html',{'month':month,'week':weekListFinal,'user':user,'week_title':start_end})
-    
-
+    return render(
+        request, 'user/timetable-week.html',
+        {
+            'week': [date + datetime.timedelta(days=i) for i in range(7)],
+            'start_date': date,
+            'shifts': grouped_shifts,
+            'user': request.user,
+        }
+    )
 
 @login_required
 def settings(request):
@@ -169,26 +95,16 @@ def create_timetable(request):
                 req = models.ShiftSwapRequest(shift=obj, message=form.cleaned_data.get('message'))
                 req.save()
 
-    start_date = datetime.datetime.fromtimestamp(utils.int_or_zero(request.GET.get('week_start', 0)))
-    if start_date.timestamp() == 0:
-        start_date = datetime.datetime.today()
-        start_date += datetime.timedelta(days=-start_date.weekday()) # get most recent monday
-        start_date = datetime.datetime.combine(start_date, datetime.time(0))
-    shifts: list[models.Shift] = models.Shift.objects.filter( # type: ignore
-        start_at__range=[start_date, start_date + datetime.timedelta(days=6)]
-    ).order_by('start_at')
-    grouped_shifts = [[] for _ in range(7)]
-    for shift in shifts:
-        start: datetime.datetime = shift.start_at # type: ignore
-        if shift.assigned_to is None:
-            shift.assigned_to = models.User(first_name='[Open]') # type: ignore
-        grouped_shifts[start.weekday()].append(shift)
+    start_date = utils.query_timestamp(request, 'week_start')
+
+    date, grouped_shifts = queries.get_shifts_for_week(start_date, fmt=queries.format_shift_for_admin)
+
     ctx = {
         "user": request.user,
         "form": form,
-        "start_date": start_date,
+        "start_date": date,
         "shifts": grouped_shifts,
-        "days": [start_date + datetime.timedelta(days=i) for i in range(7)] # for convenience in the frontend
+        "days": [date + datetime.timedelta(days=i) for i in range(7)] # for convenience in the frontend
     }
     return render(request, 'admin/create_shift.html', ctx)
 
@@ -314,6 +230,57 @@ def statistics(request):
             "elapsed":time_elapsed, 
             "days": day_distribution,
             })
+
+@login_required
+def shift_swap_request(request, pk):
+    form = ShiftSwapRequestForm()
+    if request.method == "POST":
+        post_data: QueryDict = request.POST.copy()
+        post_data.update({
+            "shift": pk
+        })
+        form = ShiftSwapRequestForm(post_data)
+        if form.is_valid():
+            if form.cleaned_data['shift'].assigned_to.id == request.user.id:
+                form.save()
+
+    return render(
+        request, 'shifts/swap_request.html',
+        {
+            "user": request.user,
+            "form": form
+        }
+    )
+
+@login_required
+def view_shift_requests(request):
+    form = ShiftSwapAcceptForm()
+    if request.method == "POST":
+        form = ShiftSwapAcceptForm(request.POST)
+        if form.is_valid():
+            req: models.ShiftSwapRequest = form.cleaned_data["request"] # type: ignore
+            shift: models.Shift = req.shift # type: ignore
+            if shift.role == request.user.role and shift.start_at > datetime.datetime.now().astimezone():
+                req.active = False
+                req.save()
+                shift.completed_by = request.user
+                shift.save()
+
+    reqs = models.ShiftSwapRequest.objects\
+            .filter(shift__role=request.user.role)\
+            .filter(active=True)\
+            .filter(shift__start_at__gt=datetime.datetime.now())\
+            .order_by('shift__start_at')
+
+    return render(
+        request, 'shifts/swap_list.html',
+        {
+            "user": request.user,
+            "num_requests": len(reqs),
+            "requests": reqs,
+            "form": form,
+        }
+    )
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
