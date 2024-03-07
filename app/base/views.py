@@ -4,10 +4,10 @@ from django.contrib.auth.views import LoginView
 from django.http import HttpRequest
 from django.http.request import QueryDict
 from django.shortcuts import render
-import calendar
 import datetime
 
 from base import models
+from base import queries
 from base.auth import manager_only
 from clockIn import utils
 
@@ -33,97 +33,40 @@ def my_shift(request,pk):
 
 
 @login_required
-def time_table_page(request):
-    current_date = datetime.datetime.now()
+def timetable_month(request):
 
-    user = request.user
+    start_date = utils.query_timestamp(request, 'month_start')
+    date, grouped_shifts = queries.get_shifts_for_month(start_date,
+                                           for_user=request.user,
+                                           fmt=queries.format_shift_for_user
+                                           )
+    month = date.strftime("%b")
     
-    #MONTH HANDLING
-    monthNum = current_date.month
-    months = ["January","February","March","April","May","June",
-    "July","August","September","October","November","December"]
-    
-    month = months[monthNum-1]
-
-    year = current_date.year
-    day = current_date.day
-    hour = current_date.hour
-    num_days_in_month = calendar.monthrange(year, monthNum)[1]
-    dayList = []
-
-    first_day = current_date.replace(day=1)
-    first_day = first_day.weekday()
-    for i in range(first_day):
-        dayi = {'date':"",'weekday':i,'shift': 0}
-        dayList.append(dayi)
-
-    user_shifts = models.Shift.objects.filter(assigned_to=request.user)
-
-    
-    
-    for day in range(1,num_days_in_month + 1):
-        current_day = current_date.replace(day=day)
-        current_weekday = current_day.weekday()
-        shift_day = 0
-        for shift in user_shifts:
-            start = (shift.start_at)   
-
-            if current_day.day == start.day:
-                shift_day = shift
-
-        dayi = {'date':day,'weekday':current_weekday,'shift':shift_day}
-        dayList.append(dayi)
-
-    weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
-    
-    return render(request, 'user/timetable.html',{'month':month,'weeks':weeks,'user':user})
+    return render(request, 'user/timetable.html', {
+        'month': month,
+        'start_date': date,
+        'weeks': grouped_shifts,
+        'user': request.user,
+        'year': date.year,
+    })
 
 def timetable_week(request):
 
-    current_date = datetime.datetime.now()
-    user = request.user
-    monthNum = current_date.month
-    months = ["January","February","March","April","May","June",
-    "July","August","September","October","November","December"]
-    month = months[monthNum-1]
-    year = current_date.year
-    day = current_date.day
-    hour = current_date.hour
-    num_days_in_month = calendar.monthrange(year, monthNum)[1]
-    dayList = []
-    first_day = current_date.replace(day=1)
-    first_day = first_day.weekday()
-    for i in range(first_day):
-        dayi = {'date':"",'weekday':i,'shift': 0}
-        dayList.append(dayi)
-    user_shifts = models.Shift.objects.filter(assigned_to=request.user)
-    for day in range(1,num_days_in_month + 1):
-        current_day = current_date.replace(day=day)
-        current_weekday = current_day.weekday()
-        shift_day = 0
-        for shift in user_shifts:
-            start = (shift.start_at)   
-            if current_day.day == start.day:
-                shift_day = shift
-        dayi = {'date':day,'weekday':current_weekday,'shift':shift_day}
-        dayList.append(dayi)
-    weeks = [dayList[i:i+7] for i in range(0, len(dayList), 7)]
+    start_date = utils.query_timestamp(request, 'week_start')
+    date, grouped_shifts = queries.get_shifts_for_week(start_date,
+                                                       for_user=request.user,
+                                                       fmt=queries.format_shift_for_user
+                                                       )
 
-    print(weeks)
-
-    actual_week = {}
-
-    for week in weeks:
-        for day in week:
-            if day['date'] == current_date.day:
-                actual_week = week
-
-    start_end = f"{month} week {actual_week[0]['date']} to {actual_week[len(actual_week)-1]['date']}"
-    print(start_end)
-
-    return render(request, 'user/timetable-week.html',{'month':month,'week':actual_week,'user':user,'week_title':start_end})
-    
-
+    return render(
+        request, 'user/timetable-week.html',
+        {
+            'week': [date + datetime.timedelta(days=i) for i in range(7)],
+            'start_date': date,
+            'shifts': grouped_shifts,
+            'user': request.user,
+        }
+    )
 
 @login_required
 def settings(request):
@@ -150,26 +93,16 @@ def create_timetable(request):
                 req = models.ShiftSwapRequest(shift=obj, message=form.cleaned_data.get('message'))
                 req.save()
 
-    start_date = datetime.datetime.fromtimestamp(utils.int_or_zero(request.GET.get('week_start', 0)))
-    if start_date.timestamp() == 0:
-        start_date = datetime.datetime.today()
-        start_date += datetime.timedelta(days=-start_date.weekday()) # get most recent monday
-        start_date = datetime.datetime.combine(start_date, datetime.time(0))
-    shifts: list[models.Shift] = models.Shift.objects.filter( # type: ignore
-        start_at__range=[start_date, start_date + datetime.timedelta(days=6)]
-    ).order_by('start_at')
-    grouped_shifts = [[] for _ in range(7)]
-    for shift in shifts:
-        start: datetime.datetime = shift.start_at # type: ignore
-        if shift.assigned_to is None:
-            shift.assigned_to = models.User(first_name='[Open]') # type: ignore
-        grouped_shifts[start.weekday()].append(shift)
+    start_date = utils.query_timestamp(request, 'week_start')
+
+    date, grouped_shifts = queries.get_shifts_for_week(start_date, fmt=queries.format_shift_for_admin)
+
     ctx = {
         "user": request.user,
         "form": form,
-        "start_date": start_date,
+        "start_date": date,
         "shifts": grouped_shifts,
-        "days": [start_date + datetime.timedelta(days=i) for i in range(7)] # for convenience in the frontend
+        "days": [date + datetime.timedelta(days=i) for i in range(7)] # for convenience in the frontend
     }
     return render(request, 'admin/create_shift.html', ctx)
 
