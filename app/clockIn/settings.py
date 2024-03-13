@@ -16,6 +16,22 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PATH_TO_ENV = BASE_DIR.parenth / '.env'
+
+
+environment_variables = {}
+
+def load_sending_data():
+    try:
+        with open(PATH_TO_ENV) as file:
+            for line in file:
+                if "=" in line:
+                    setting_name,setting_value = line.strip().split("=",1)
+                    environment_variables[setting_name] = setting_value.strip()
+    except FileNotFoundError:
+        pass
+    return environment_variables
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -152,6 +168,11 @@ USE_I18N = True
 
 USE_TZ = True
 
+EMAIL_HOST = environment_variables.get('EMAIL_HOST')
+EMAIL_HOST_USER = environment_variables.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = environment_variables.get('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = environment_variables.get('EMAIL_PORT')
+EMAIL_USE_TLS = environment_variables.get('EMAIL_USE_TLS')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

@@ -31,6 +31,8 @@ class User(AbstractUser): # Extend default user model
     email = models.EmailField(_('email address'), unique=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True)
     calendar_place = models.IntegerField(default = 0)
+    recieve_shift_reminders = models.BooleanField(default = True)
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
