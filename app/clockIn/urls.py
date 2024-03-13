@@ -51,6 +51,13 @@ auth_urls = [
     path("settings/", views.settings, name="settings"),
 ]
 
+statistic_urls = [
+    path("", views.earnings, name="statistics"),
+    path("distribution", views.distribution, name="distribution"),
+    path("history", views.history, name="history"),
+    path("earnings", views.earnings, name="earnings"),
+]
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include(auth_urls)),
@@ -58,7 +65,7 @@ urlpatterns = [
     path('timetable/week/', views.timetable_week, name="timetable_week"),
     path('timetable/create/', views.create_timetable, name="create_timetable"),
     path('my_shift/<str:pk>/', views.my_shift, name="my_shift"),
-    path('statistics/', views.statistics, name="statistics"),
+    path('statistics/', include(statistic_urls)),
     path('shift/<str:pk>/swap/', views.shift_swap_request, name="swap_request"),
     path('shift/available/', views.view_shift_requests, name="view_requests"),
 ]

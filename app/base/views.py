@@ -108,8 +108,23 @@ def create_timetable(request):
     }
     return render(request, 'admin/create_shift.html', ctx)
 
-def statistics(request):
-
+def distribution(request):
+    today = datetime.datetime.now()
+    all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
+    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+    
+    day_distribution = {}
+    day_distribution["sunday"] = to_date.filter(start_at__week_day=1).count()
+    day_distribution["monday"] = to_date.filter(start_at__week_day=2).count()
+    day_distribution["tuesday"] = to_date.filter(start_at__week_day=3).count()
+    day_distribution["wednesday"] = to_date.filter(start_at__week_day=4).count()
+    day_distribution["thursday"] = to_date.filter(start_at__week_day=5).count()
+    day_distribution["friday"] = to_date.filter(start_at__week_day=6).count()
+    day_distribution["saturday"] = to_date.filter(start_at__week_day=7).count()
+    
+    return render(request, 'user/distribution.html', {"days": day_distribution,})
+    
+def history(request):
     today = datetime.datetime.now()
     last_week = today - datetime.timedelta(weeks=1)
     month_start = today.replace(day=1)
@@ -123,24 +138,7 @@ def statistics(request):
     past_week = all_shifts.filter(end_at__range=[last_week, today]).order_by("-start_at", )
     this_month_to_date = all_shifts.filter(end_at__range=[month_start, today]).order_by("-start_at", )
     this_year_to_date = all_shifts.filter(end_at__range=[year_start,today]).order_by("-start_at", )
-     
-    if request.user.is_staff:
-        return manager_statistics(request)
     
-    if all_shifts.count() == 0:
-        return render(request, "user/statistics.html", {"empty": True})
-    
-         
-    day_distribution = {}
-    day_distribution["sunday"] = to_date.filter(start_at__week_day=1).count()
-    day_distribution["monday"] = to_date.filter(start_at__week_day=2).count()
-    day_distribution["tuesday"] = to_date.filter(start_at__week_day=3).count()
-    day_distribution["wednesday"] = to_date.filter(start_at__week_day=4).count()
-    day_distribution["thursday"] = to_date.filter(start_at__week_day=5).count()
-    day_distribution["friday"] = to_date.filter(start_at__week_day=6).count()
-    day_distribution["saturday"] = to_date.filter(start_at__week_day=7).count()
-
-
     calculated_to_date = to_date.annotate(
         time_difference=ExpressionWrapper(
             Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
@@ -173,29 +171,52 @@ def statistics(request):
     earnings_this_month = earnings_this_month["total_sum"]
     earnings_this_year = earnings_this_year["total_sum"]
     
+    return render(request, 'user/history.html', {
+        "week": {"shifts": past_week, "earnings": "{:.2f}".format(earnings_this_week) if earnings_to_date != None else 0 }, 
+        "month": {"shifts": this_month_to_date, "earnings":  "{:.2f}".format(earnings_this_month) if earnings_to_date != None else 0 },
+        "year": {"shifts": this_year_to_date, "earnings":  "{:.2f}".format(earnings_this_year) if earnings_to_date != None else 0 }, 
+        "to_date": {"shifts": to_date, "earnings":  "{:.2f}".format(earnings_to_date) if earnings_to_date != None else 0 },
+        "scheduled": scheduled,
+    })
+    
+def earnings(request):
+    today = datetime.datetime.now()
+    all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
+    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+    
     if to_date.count() != 0:
         aggregate = to_date.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
         time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
     else:
         time_elapsed = 0
+        
+        
+    calculated_to_date = to_date.annotate(
+        time_difference=ExpressionWrapper(
+            Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
+            output_field=FloatField()
+        ),
+        multiplied_result=ExpressionWrapper(
+            F('time_difference') * F('wage_multiplier') * Cast(F("assigned_to__role__hourly_rate"), output_field=FloatField()),
+            output_field=FloatField()
+        ),
+    )
     
-
+    earnings_to_date = calculated_to_date.aggregate(
+        total_sum=Sum('multiplied_result')
+    )
     
-    return render(
-        request, 'user/statistics.html', 
-        {
-            "user": request.user,
-            "shifts": all_shifts,
-            "week": {"shifts": past_week, "earnings": "{:.2f}".format(earnings_this_week) if earnings_to_date != None else 0 }, 
-            "month": {"shifts": this_month_to_date, "earnings":  "{:.2f}".format(earnings_this_month) if earnings_to_date != None else 0 },
-            "year": {"shifts": this_year_to_date, "earnings":  "{:.2f}".format(earnings_this_year) if earnings_to_date != None else 0 }, 
-            "to_date": {"shifts": to_date, "earnings":  "{:.2f}".format(earnings_to_date) if earnings_to_date != None else 0 },
-            "scheduled": scheduled,
-            "elapsed":time_elapsed, 
-            "days": day_distribution,
-            })
+    earnings = "0"
+    
+    if earnings_to_date["total_sum"] != None:
+        earnings = "{:.2f}".format(earnings_to_date["total_sum"])          
+        
+    print(earnings)
+    return render(request, 'user/earnings.html', {
+        "to_date": {"shifts": to_date, "earnings": earnings },
+        "elapsed":time_elapsed
+    })    
 
-<<<<<<< Updated upstream
 @login_required
 def shift_swap_request(request, pk):
     form = ShiftSwapRequestForm()
@@ -246,7 +267,7 @@ def view_shift_requests(request):
             "form": form,
         }
     )
-=======
+
 def manager_statistics(request):
     all_workers = models.User.objects.filter(is_staff=False)
         
@@ -278,7 +299,6 @@ def manager_statistics(request):
         "worker_distribution": worker_distribution,
         "weekend_fairness": weekend_fairness
         })
->>>>>>> Stashed changes
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
