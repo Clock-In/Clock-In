@@ -119,49 +119,13 @@ def statistics(request):
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
 
     scheduled = all_shifts.filter(end_at__range=[today, datetime.datetime.max])
-    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today])
-    past_week = all_shifts.filter(end_at__range=[last_week, today])
-    this_month_to_date = all_shifts.filter(end_at__range=[month_start, today])
-    this_year_to_date = all_shifts.filter(end_at__range=[year_start,today])
+    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+    past_week = all_shifts.filter(end_at__range=[last_week, today]).order_by("-start_at", )
+    this_month_to_date = all_shifts.filter(end_at__range=[month_start, today]).order_by("-start_at", )
+    this_year_to_date = all_shifts.filter(end_at__range=[year_start,today]).order_by("-start_at", )
      
     if request.user.is_staff:
-        all_workers = models.User.objects.filter(is_staff=False)
-        
-        worker_distribution = []
-        for worker in all_workers:
-            worker_shifts = models.Shift.objects.filter(assigned_to=worker.id)
-            worker_info = {}
-            worker_info["name"] = worker.name
-            worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
-            worker_info["monday"] = worker_shifts.filter(start_at__week_day=2).count()
-            worker_info["tuesday"] = worker_shifts.filter(start_at__week_day=3).count()
-            worker_info["wednesday"] = worker_shifts.filter(start_at__week_day=4).count()
-            worker_info["thursday"] = worker_shifts.filter(start_at__week_day=5).count()
-            worker_info["friday"] = worker_shifts.filter(start_at__week_day=6).count()
-            worker_info["saturday"] = worker_shifts.filter(start_at__week_day=7).count()
-            worker_info["total"] = worker_shifts.count()
-            worker_distribution.append(worker_info)
-
-        weekend_fairness = {}
-        weekend_fairness["workers"] = []
-        for worker in worker_distribution:
-            weekend_fairness["workers"].append({"name": worker["name"], "score":worker["saturday"] + worker["sunday"] * 1.5})
-        weekend_fairness["mean"] = mean([w["score"] for w in weekend_fairness["workers"]])
-        weekend_fairness["stdev"] = stdev([w["score"] for w in weekend_fairness["workers"]])
-
-        fairness = {}
-        fairness["workers"] = []
-        for worker in worker_distribution:
-            fairness["workers"].append({"name": worker["name"], "total": worker["total"]})
-        fairness["mean"] = mean([w["total"] for w in fairness["workers"]])
-        fairness["stdev"] = stdev([w["total"] for w in fairness["workers"]])
-
-        return render(request, "user/manager_statistics.html",{
-            "employee_count": all_workers.count(),
-            "worker_distribution": worker_distribution,
-            "weekend_fairness": weekend_fairness,
-            "fairness": fairness
-            })
+        return manager_statistics(request)
     
     if all_shifts.count() == 0:
         return render(request, "user/statistics.html", {"empty": True})
@@ -231,6 +195,7 @@ def statistics(request):
             "days": day_distribution,
             })
 
+<<<<<<< Updated upstream
 @login_required
 def shift_swap_request(request, pk):
     form = ShiftSwapRequestForm()
@@ -281,6 +246,39 @@ def view_shift_requests(request):
             "form": form,
         }
     )
+=======
+def manager_statistics(request):
+    all_workers = models.User.objects.filter(is_staff=False)
+        
+    worker_distribution = []
+    for worker in all_workers:
+        worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
+        worker_info = {}
+        worker_info["name"] = worker.name
+        worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
+        worker_info["saturday"] = worker_shifts.filter(start_at__week_day=7).count()
+        worker_info["shift_count"] = worker_shifts.count()
+        
+        time_elapsed = worker_shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
+        time_elapsed = time_elapsed["time_elapsed"] / datetime.timedelta(hours=1)
+        
+        worker_info["total"] = time_elapsed
+        worker_distribution.append(worker_info)
+
+    weekend_fairness = {}
+    weekend_fairness["workers"] = []
+    for worker in worker_distribution:
+        weekend_fairness["workers"].append({"name": worker["name"], "score":worker["saturday"] + worker["sunday"] * 1.5})
+    weekend_fairness["mean"] = mean([w["score"] for w in weekend_fairness["workers"]])
+    weekend_fairness["stdev"] = stdev([w["score"] for w in weekend_fairness["workers"]])
+
+
+    return render(request, "user/manager_statistics.html",{
+        "employee_count": all_workers.count(),
+        "worker_distribution": worker_distribution,
+        "weekend_fairness": weekend_fairness
+        })
+>>>>>>> Stashed changes
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
