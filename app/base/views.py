@@ -168,7 +168,7 @@ def history(request, period):
     
 def earnings(request):
     if request.user.is_staff:
-        return manager_statistics(request)
+        return insights(request)
     
     today = datetime.datetime.now()
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
@@ -258,8 +258,8 @@ def view_shift_requests(request):
         }
     )
 
-def manager_statistics(request):
-   
+@manager_only
+def insights(request):
     all_workers = models.User.objects.filter(is_staff=False)
     worker_distribution = []
     for worker in all_workers:
@@ -268,13 +268,13 @@ def manager_statistics(request):
         worker_info["name"] = worker.name
         worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
         worker_info["saturday"] = worker_shifts.filter(start_at__week_day=7).count()
-        worker_info["shift_count"] = worker_shifts.count()
         
         time_elapsed = worker_shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
         time_elapsed = time_elapsed["time_elapsed"] / datetime.timedelta(hours=1)
         
         worker_info["total"] = time_elapsed
         worker_distribution.append(worker_info)
+        
     weekend_fairness = {}
     weekend_fairness["workers"] = []
     for worker in worker_distribution:
@@ -285,13 +285,28 @@ def manager_statistics(request):
         weekend_fairness["stdev"] = stdev([w["score"] for w in weekend_fairness["workers"]])
     else:
         weekend_fairness["stdev"] = 0
+    return render(request, "user/insights.html", {"weekend_fairness": weekend_fairness})
 
-
-    return render(request, "user/manager_statistics.html",{
+@manager_only
+def breakdown(request):
+    all_workers = models.User.objects.filter(is_staff=False)
+    worker_distribution = []
+    for worker in all_workers:
+        worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
+        worker_info = {}
+        worker_info["name"] = worker.name
+        worker_info["shift_count"] = worker_shifts.count()
+        
+        time_elapsed = worker_shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
+        time_elapsed = time_elapsed["time_elapsed"] / datetime.timedelta(hours=1)
+        
+        worker_info["total"] = time_elapsed
+        worker_distribution.append(worker_info)
+    
+    return render(request, "user/breakdown.html", {
         "employee_count": all_workers.count(),
         "worker_distribution": worker_distribution,
-        "weekend_fairness": weekend_fairness
-        })
+    })
 
 class CustomLoginView(LoginView):
     form_class = LoginForm

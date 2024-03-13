@@ -9,16 +9,12 @@
 </head>
 <body>
     {% include 'Navigation_Bar.html' with active="statistics" %}
-    <div class="container-fluid">
-        <i class="bi bi-people-fill"></i> Employee count: {{employee_count}}
-
-        <div id="bar_chart"></div>
-        {% for worker in worker_distribution %}
-            <h3>{{worker.name}}</h3>
-            <p>Shifts worked: {{worker.shift_count}}</p>
-            <p>Hours worked: {{worker.total}}</p>
-        {% endfor %}
+    {% include 'user/manager_stats_navbar.html' with active="insights"%}
     
+    <div class="container-fluid">
+        <p>WORKER works the most weekends</p>
+        <p>WORKER is scheduled for the most hours this week</p>
+        <p>WORKER has taken the least holiday days</p>
         <p>{{weekend_fairness}}</p>
     </div>
 </body>

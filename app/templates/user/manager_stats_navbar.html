@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <body>
+	<nav class="navbar navbar-expand navbar-dark" style="background-color: #013c66;">
+		<div class="container-fluid">
+
+			<div class="collapse navbar-collapse">
+				<ul class="navbar-nav">
+					<li class="nav-item ms-1">
+						<a class="nav-link {% if active == 'insights' %}active{% endif %}" href="{%url 'insights' %}"><i class="bi bi-stars"></i></span> Insights </a>
+					</li>
+					<li class="nav-item ms-1">
+						<a class="nav-link {% if active == 'insights' %}active{% endif %}" href="{%url 'breakdown' %}"><i class="bi bi-person-lines-fill"></i></span> Breakdown </a>
+					</li>
+				</ul>
+			</div>
+
+		</div>
+    </nav>
+
+  </body> 
+</html>
