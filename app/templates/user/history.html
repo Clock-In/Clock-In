@@ -11,26 +11,10 @@
     {% include 'Navigation_Bar.html' with active="statistics" %}
     {% include 'user/stats_navbar.html' with active="history" %}
 
-    <h3>In the last 7 days <span class="text-muted">£{{week.earnings}}</span></h3>
-    <div class="list-group h-75" style="overflow-y: auto;">
-    {% for s in week.shifts %}
-        <div class="list-group-item">
-            {{s.start_at}} - {{s.end_at}}
-            <footer class="text-muted">
-                {{user.role}}
-                {% if s.wage_multiplier != 1.0 %}
-                <span class="badge text-bg-info">{{s.wage_multiplier}}x</span>
-                {% endif %}
-            </footer>
-        </div>
-    {% endfor %}
-    </div>
-
-
-
-    <h3>This month so far <span class="text-muted">£{{month.earnings}}</span></h3>
-    <div class="list-group h-75" style="overflow-y: auto;">
-        {% for s in month.shifts %}
+    <div class="container-fluid p-3">
+        <h3>{{message}} <span class="text-muted">£{{earnings}}</span></h3>
+        <div class="list-group h-75" style="overflow-y: auto;">
+        {% for s in shifts %}
             <div class="list-group-item">
                 {{s.start_at}} - {{s.end_at}}
                 <footer class="text-muted">
@@ -41,25 +25,8 @@
                 </footer>
             </div>
         {% endfor %}
-    </div>
-
-
-
-
-    <h3>This year so far <span class="text-muted">£{{year.earnings}}</span></h3>
-    <div class="list-group h-75" style="overflow-y: auto;">
-    {% for s in year.shifts %}
-        <div class="list-group-item">
-            {{s.start_at}} - {{s.end_at}}
-            <footer class="text-muted">
-                {{user.role}}
-                {% if s.wage_multiplier != 1.0 %}
-                <span class="badge text-bg-info">{{s.wage_multiplier}}x</span>
-                {% endif %}
-            </footer>
-
         </div>
-    {% endfor %}
     </div>
+
 </body>
 </html>

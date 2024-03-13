@@ -54,7 +54,7 @@ auth_urls = [
 statistic_urls = [
     path("", views.earnings, name="statistics"),
     path("distribution", views.distribution, name="distribution"),
-    path("history", views.history, name="history"),
+    path("history/<str:period>", views.history, name="history"),
     path("earnings", views.earnings, name="earnings"),
 ]
 

@@ -10,7 +10,19 @@
 <body class="p-0">
     {% include 'Navigation_Bar.html' with active="statistics" %}
     {% include 'user/stats_navbar.html' with active="distribution"%}
-    <div id="day_distribution"></div>
+
+    
+    <div class="container-fluid p-0">
+        <div class="row justify-content-center text-center m-0">
+            <h2>Your shift distribution throughout the week</h2>
+        </div>
+        <div class="row justify-content-center text-center m-0">
+            <div class="col-4">
+                <div id="day_distribution"></div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         json = JSON.parse("{{days}}".replaceAll("&#x27;","\""))
@@ -56,9 +68,6 @@
         const y = d3.scaleLinear()
         .domain([0, max_value])
         .rangeRound([ height, 0]);
-
-        // svg.append("g")
-        // .call(d3.axisLeft(y))
 
         // Bars
         svg.selectAll("bar")
