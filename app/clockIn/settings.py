@@ -16,7 +16,7 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-PATH_TO_ENV = BASE_DIR.parenth / '.env'
+PATH_TO_ENV = BASE_DIR.parent / '.env'
 
 
 environment_variables = {}
@@ -30,7 +30,7 @@ def load_sending_data():
                     environment_variables[setting_name] = setting_value.strip()
     except FileNotFoundError:
         pass
-    return environment_variables
+    
 
 
 
