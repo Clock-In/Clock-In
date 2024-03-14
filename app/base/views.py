@@ -75,8 +75,6 @@ def settings(request):
     if request.method == "POST":
         user_form = ExtendedCustomUserChangeForm(request.POST, instance=request.user)
         if user_form.is_valid():
-            user_recieve_shift_reminders = 'recieve_shift_reminders' in request.POST
-            request.user.recieve_shift_reminders = user_recieve_shift_reminders
             user_form.save()
 
     else:

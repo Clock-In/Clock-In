@@ -26,7 +26,7 @@ class ExtendedCustomUserChangeForm(UserChangeForm):
     
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name')
+        fields = ('email', 'first_name', 'last_name','recieve_shift_reminders')
     
     first_name = forms.CharField(max_length=100,
                                required=True,
@@ -36,6 +36,7 @@ class ExtendedCustomUserChangeForm(UserChangeForm):
                                widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'last_name_input'}))
     email = forms.EmailField(required=True,
                              widget=forms.EmailInput(attrs={'class': 'form-control', 'id': 'email_input'}))
+    recieve_shift_reminders = forms.BooleanField(required = False, label = 'Recieve shift reminders')
         
 class ShiftCreationForm(forms.ModelForm):
     field_order = ['is_open', 'role']

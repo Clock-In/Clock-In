@@ -44,9 +44,9 @@
         
 
                 <h1>Privacy and Security</h1>
-                <input type="checkbox" id="recieve_shift_reminders" name="recieve_shift_reminders" {% if user.recieve_shift_reminders %} checked {% endif %}>
-                <label for="recieve_shift_reminders">Recieve shift reminders? </label>
-        
+                
+                {{user_form.recieve_shift_reminders}}
+            
                 <p></p><a href="{% url 'password_change' %}" class="btn btn-secondary">Update password</a></p>
         
                 <h1>Account Management</h1>
