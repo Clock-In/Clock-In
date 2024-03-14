@@ -9,9 +9,9 @@ logging.BaseConfig( level = logging.ERROR, format = '%(asctime)s - %(name)s - %(
 logger = logging.getLogger(__file__)
 
 def email_sending():
-    time_now=timezone.now()
-    after_two_hours=time_now+timedelta(hours =2 )
-    upcoming_shift=Shift.objects.filter(start_at__gte = time_now,start_at__lte = after_two_hours)
+    time_now = timezone.now()
+    after_two_hours = time_now+timedelta(hours =2 )
+    upcoming_shift = Shift.objects.filter(start_at__gte = time_now,start_at__lte = after_two_hours,reminder_email_sent = False)
 
 
     for soon_shifts in upcoming_shift:
@@ -21,13 +21,15 @@ def email_sending():
             employee_email = recipient.email
             employee_name = recipient.name
             
-            subject="Upcoming Shift Reminder"
-            message=(f'Hello {employee_name}\n\n',
+            subject = "Upcoming Shift Reminder"
+            message = (f'Hello {employee_name}\n\n',
                      f"This is a reminder about your scheduled shift today. Please note that your shift begins in two hours at {soon_shifts.start_at.strftime('%I:%M %P')}.")
-            sender_email=settings.EMAIL_HOST_USER
-            employee_having_shift=[employee_email]
+            sender_email = settings.EMAIL_HOST_USER
+            employee_having_shift = [employee_email]
             try:
                 send_mail(subject, message, sender_email, employee_having_shift)
+                soon_shifts.reminder_email_sent = True
+                soon_shifts.save()
             except Exception as e:
                 error_message = f"An error has occured while sending a shift reminder email to {employee_name}: {e}\n"
                 logger.error(error_message)

@@ -53,6 +53,7 @@ class Shift(models.Model):
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
     wage_multiplier = models.FloatField(default=1) # type: ignore
+    reminder_email_sent = models.BooleanField(default = False)
 
     class Meta:
         ordering = ['-start_at', '-end_at']
