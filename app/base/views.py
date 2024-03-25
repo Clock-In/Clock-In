@@ -3,7 +3,9 @@ from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.views import LoginView
 from django.http import HttpRequest
 from django.http.request import QueryDict
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+
+
 import datetime
 from statistics import mean, stdev
 
@@ -310,3 +312,23 @@ def breakdown(request):
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
+
+
+@login_required
+def delete_shift(request, pk):
+    shift = get_object_or_404(models.Shift, pk=pk)
+    if request.method == 'POST':
+        shift.delete()
+        return redirect('time_table_page')  # Redirect to the timetable page after deletion
+    return render(request, 'shift/delete.html', {'shift': shift})
+
+@login_required
+def edit_shift(request, pk):
+    shift = get_object_or_404(models.Shift, pk=pk)
+    form = ShiftCreationForm(instance=shift)
+    if request.method == 'POST':
+        form = ShiftCreationForm(request.POST, instance=shift)
+        if form.is_valid():
+            form.save()
+            return redirect('time_table_page')  # Redirect to the timetable page after editing
+    return render(request, 'shift/edit.html', {'form': form, 'shift': shift})

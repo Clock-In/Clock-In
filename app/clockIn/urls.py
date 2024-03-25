@@ -70,4 +70,8 @@ urlpatterns = [
     path('statistics/', include(statistic_urls)),
     path('shift/<str:pk>/swap/', views.shift_swap_request, name="swap_request"),
     path('shift/available/', views.view_shift_requests, name="view_requests"),
+    path('shift/<int:pk>/delete/', views.delete_shift, name='delete_shift'),
+    path('shift/<int:pk>/edit/', views.edit_shift, name='edit_shift'),
 ]
+
+

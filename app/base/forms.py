@@ -95,3 +95,13 @@ class ShiftSwapAcceptForm(forms.Form):
         )
     )
 
+
+class ShiftEditForm(forms.ModelForm):
+    class Meta:
+        model = Shift
+        fields = ['start_at', 'end_at', 'assigned_to', 'role', 'is_open', 'message']
+        # You can customize the fields as needed
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add any additional customization here if required
