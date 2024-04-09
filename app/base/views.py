@@ -109,9 +109,14 @@ def create_timetable(request):
     return render(request, 'admin/create_shift.html', ctx)
 
 def distribution(request):
-    today = datetime.datetime.now()
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
+
+
+    today = datetime.datetime.now()
     to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+    
+    if to_date.count() == 0:
+        return render(request, 'user/distribution.html', {"empty": True})
     
     day_distribution = {}
     day_distribution["sunday"] = to_date.filter(start_at__week_day=1).count()
@@ -170,8 +175,15 @@ def earnings(request):
     if request.user.is_staff:
         return insights(request)
     
-    today = datetime.datetime.now()
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
+
+    if all_shifts.count() == 0:
+        return render(request, 'user/earnings.html', {
+            "to_date": {"shifts": all_shifts, "earnings": "0" },
+            "elapsed":0
+        })
+
+    today = datetime.datetime.now()
     to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
     
     if to_date.count() != 0:
@@ -264,6 +276,10 @@ def insights(request):
     worker_distribution = []
     for worker in all_workers:
         worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
+
+        if worker_shifts.count() == 0:
+            continue
+
         worker_info = {}
         worker_info["name"] = worker.name
         worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
@@ -280,11 +296,16 @@ def insights(request):
     for worker in worker_distribution:
         weekend_fairness["workers"].append({"name": worker["name"], "score":worker["saturday"] + worker["sunday"] * 1.5})
     
+    weekend_fairness["mean"] = 0
+    weekend_fairness["stdev"] = 0
+
+    if len(weekend_fairness["workers"]) == 0:
+        return render(request, "user/insights.html", {"weekend_fairness": weekend_fairness})
+    
     weekend_fairness["mean"] = mean([w["score"] for w in weekend_fairness["workers"]])
     if len(weekend_fairness["workers"]) > 1:
         weekend_fairness["stdev"] = stdev([w["score"] for w in weekend_fairness["workers"]])
-    else:
-        weekend_fairness["stdev"] = 0
+
     return render(request, "user/insights.html", {"weekend_fairness": weekend_fairness})
 
 @manager_only
@@ -293,6 +314,10 @@ def breakdown(request):
     worker_distribution = []
     for worker in all_workers:
         worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
+
+        if worker_shifts.count() == 0:
+            continue
+
         worker_info = {}
         worker_info["name"] = worker.name
         worker_info["shift_count"] = worker_shifts.count()
