@@ -9,8 +9,9 @@
     {% include 'Navigation_Bar.html' with active="profile" %}
     <h1 class="display-3">Welcome, {{ user.first_name }}.</h1>
 
+    {% if next %}
     Your next scheduled shift is on <a href="{% url 'my_shift' pk=next.id%}">{{next.start_at.date}}</a> and starts at {{next.start_at.time}} <a href="{% url 'timetable' %}">Full timetable</a>
-
+    {% endif %}
     <p class="mt-5"><a href="{% url 'logout' %}" >Log out</a></p> 
 
 </body>
