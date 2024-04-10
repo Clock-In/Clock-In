@@ -340,14 +340,16 @@ class CustomLoginView(LoginView):
 
 
 @login_required
+@manager_only
 def delete_shift(request, pk):
     shift = get_object_or_404(models.Shift, pk=pk)
     if request.method == 'POST':
         shift.delete()
-        return redirect('time_table_page')  # Redirect to the timetable page after deletion
+        return redirect('/timetable/create')  # Redirect to the timetable page after deletion
     return render(request, 'shift/delete.html', {'shift': shift})
 
 @login_required
+@manager_only
 def edit_shift(request, pk):
     shift = get_object_or_404(models.Shift, pk=pk)
     form = ShiftCreationForm(instance=shift)
@@ -355,5 +357,6 @@ def edit_shift(request, pk):
         form = ShiftCreationForm(request.POST, instance=shift)
         if form.is_valid():
             form.save()
-            return redirect('time_table_page')  # Redirect to the timetable page after editing
-    return render(request, 'shift/edit.html', {'form': form, 'shift': shift})
+            return redirect('/timetable/create')  # Redirect to the timetable page after editing
+    return render(request, 'admin/edit_shift.html', {'form': form, 'shift': shift})
+

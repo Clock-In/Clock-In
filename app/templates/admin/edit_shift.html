@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <style>
-    body {
+        body {
             font-family: Arial, sans-serif;
             background-color: #0e0202;
             padding: 20px;
@@ -10,11 +11,13 @@
             flex-direction: column;
             align-items: center;
         }
+
         form {
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
         }
+
         button {
             background-color: #042342;
             color: #fff;
@@ -23,19 +26,34 @@
             border-radius: 4px;
             transition: background-color 0.3s ease;
         }
+
         button:hover {
             background-color: #0056b3;
         }
-        h1, p {
+
+        h1,
+        p {
             color: #fffafa;
+            color: black;
             text-align: center;
         }
+
     </style>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const start_at_input = document.getElementById('id_start_at');
+            const end_at_input = document.getElementById('id_end_at');
+            start_at_input.type = 'datetime-local';
+            end_at_input.type = 'datetime-local';
+        });
+    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Shift</title>
 </head>
+
 <body>
     <h1>Edit Shift</h1>
     <form method="post">
@@ -43,12 +61,13 @@
         {{ form.as_p }}
         <button type="submit">Save Changes</button>
     </form>
-    
+
     <h1>Delete Shift</h1>
     <p>Are you sure you want to delete this shift?</p>
-    <form method="post">
+    <form method="post" action="/shift/{{shift.id}}/delete/">
         {% csrf_token %}
         <button type="submit">Delete</button>
     </form>
 </body>
+
 </html>
