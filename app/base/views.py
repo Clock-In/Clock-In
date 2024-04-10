@@ -250,7 +250,7 @@ def view_shift_requests(request):
         if form.is_valid():
             req: models.ShiftSwapRequest = form.cleaned_data["request"] # type: ignore
             shift: models.Shift = req.shift # type: ignore
-            if shift.role == request.user.role and shift.start_at > datetime.datetime.now().astimezone():
+            if shift.role == request.user.role and shift.start_at > datetime.datetime.now():
                 req.active = False
                 req.save()
                 shift.completed_by = request.user
@@ -359,4 +359,10 @@ def edit_shift(request, pk):
             form.save()
             return redirect('/timetable/create')  # Redirect to the timetable page after editing
     return render(request, 'admin/edit_shift.html', {'form': form, 'shift': shift})
+
+def index(request):
+    if request.user.is_authenticated:
+        return redirect('/accounts/profile/')
+    else:
+        return redirect('/accounts/login/')
 

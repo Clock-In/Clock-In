@@ -72,6 +72,7 @@ urlpatterns = [
     path('shift/available/', views.view_shift_requests, name="view_requests"),
     path('shift/<int:pk>/delete/', views.delete_shift, name='delete_shift'),
     path('shift/<int:pk>/edit/', views.edit_shift, name='edit_shift'),
+    path('', views.index, name='index')
 ]
 
 
