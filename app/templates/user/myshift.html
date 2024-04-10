@@ -10,9 +10,10 @@
     <p>Welcome {{shift.assigned_to}}</p>
     <p>your shift starts at {{shift.start_at}}</p>
     <p>and ends at {{shift.end_at}}</p>
-    <a href="/shift/{{shift.id}}/swap">
+    <a href="{% url 'swap_request' pk=shift.id%}">
         <button>Swap</button>
     </a>
+    <a href="{% url 'timetable' %}">Full timetable</a>
 </body>
 </html>
 
