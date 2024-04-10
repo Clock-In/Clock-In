@@ -113,7 +113,6 @@ def create_timetable(request):
 def distribution(request):
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
 
-
     today = datetime.datetime.now()
     to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
     
@@ -173,6 +172,33 @@ def history(request, period):
         "message": message
     })
     
+    
+def calculate_earnings(shifts):
+    time_elapsed = 0
+    earnings = "0"
+    aggregate = shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
+    time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
+    
+    shifts = shifts.annotate(
+        time_difference=ExpressionWrapper(
+            Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
+            output_field=FloatField()
+        ),
+        multiplied_result=ExpressionWrapper(
+            F('time_difference') * F('wage_multiplier') * Cast(F("assigned_to__role__hourly_rate"), output_field=FloatField()),
+            output_field=FloatField()
+        ),
+    )    
+    
+    shifts = shifts.aggregate(
+        total_sum=Sum('multiplied_result')
+    )
+    
+    if shifts["total_sum"] != None:
+        earnings = "{:.2f}".format(shifts["total_sum"]) 
+        
+    return (time_elapsed, earnings)
+
 def earnings(request):
     if request.user.is_staff:
         return insights(request)
@@ -186,40 +212,32 @@ def earnings(request):
         })
 
     today = datetime.datetime.now()
-    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today])
+    scheduled_shifts = all_shifts.filter(end_at__range=[today, datetime.datetime.max])
     
-    if to_date.count() != 0:
-        aggregate = to_date.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
-        time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
-    else:
-        time_elapsed = 0
-        
-        
-    calculated_to_date = to_date.annotate(
-        time_difference=ExpressionWrapper(
-            Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
-            output_field=FloatField()
-        ),
-        multiplied_result=ExpressionWrapper(
-            F('time_difference') * F('wage_multiplier') * Cast(F("assigned_to__role__hourly_rate"), output_field=FloatField()),
-            output_field=FloatField()
-        ),
-    )
+    (time_elapsed, earnings) = calculate_earnings(to_date)
     
-    earnings_to_date = calculated_to_date.aggregate(
-        total_sum=Sum('multiplied_result')
-    )
+    if scheduled_shifts.count() == 0:
+        return render(request, 'user/earnings.html', {
+            "to_date": {"shifts": to_date, "earnings": earnings },
+            "elapsed":time_elapsed,
+            "scheduled_earnings": {"month": "0", "year": "0"}
+        })
     
-    earnings = "0"
+    scheduled_shifts_month = scheduled_shifts.filter(start_at__range=[today, today.replace(day=1, month=(today.month+1) % 12)])
+    scheduled_shifts_year = scheduled_shifts.filter(start_at__range=[today, datetime.date(today.year+1, 1, 1)])
     
-    if earnings_to_date["total_sum"] != None:
-        earnings = "{:.2f}".format(earnings_to_date["total_sum"])          
-        
-    print(earnings)
+    scheduled_earnings = {}
+    scheduled_hours = {}
+    (scheduled_hours["month"],scheduled_earnings["month"]) = calculate_earnings(scheduled_shifts_month)
+    (scheduled_hours["year"], scheduled_earnings["year"]) = calculate_earnings(scheduled_shifts_year)
+
     return render(request, 'user/earnings.html', {
         "to_date": {"shifts": to_date, "earnings": earnings },
-        "elapsed":time_elapsed
-    })    
+        "elapsed":time_elapsed,
+        "scheduled_earnings": scheduled_earnings,
+        "scheduled_hours": scheduled_hours
+    })
 
 @login_required
 def shift_swap_request(request, pk):

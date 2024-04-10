@@ -4,27 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Statistics</title>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.umd.min.js" integrity="sha512-kUIpdMjMlkYUVQgR3wVXJtmuwoD+G69Zt9JBa2rPH4C/+VPlAsQWKcqCv0SpJ8AnezBjfuM2JDjnc58Ee8Filw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body class="container-fluid p-0">
     {% include 'Navigation_Bar.html' with active="statistics" %}
     {% include 'user/stats_navbar.html' with active="earnings"%}
 
-    <div class="row justify-content-center h-100 m-0">
+    <div class="row justify-content-center text-center h-100 m-0 mt-5">
+        <h1>To date</h1>
         <div class="col-4 text-center">
-            <h1 class="display-1 text-center mb-0">£{{to_date.earnings}}</h1>
+            <h1 id="earnings" class="display-1 text-center mb-0">{{to_date.earnings}}</h1>
             <small class="text-muted">Earnings so far</small>
         </div>
         <div class="col-4 text-center">
-            <h1 class="display-1 text-center mb-0">{{elapsed}}</h1>
+            <h1 id="hours" class="display-1 text-center mb-0">{{elapsed}}</h1>
             <small class="text-muted">Hours worked</small>
         </div>
     </div>
 
-    <div class="row align-items-center justify-content-md-center m-0">
-        <h3>Predicted earnings</h3>
+    <div style="color: white; background-color: #013c66;" class="row align-items-center text-center justify-content-md-center m-0 fixed-bottom">
+        <h1 class="mt-3" >Future</h1>
+        <div class="col-4 text-center mb-5">
+            <h1 id="earnings-month" class="mb-0">£{{scheduled_earnings.month}}</h1>
+            <small class="text-light">At the end of this month</small>
+            <h1 id="earnings-year" class="mb-0">£{{scheduled_earnings.year}}</h1>
+            <small class="text-light">At the end of this year</small>
+        </div>
+        <div class="col-4 text-center mb-5">
+            <div class="row">
+                <h1 id="hours-month"class="mb-0">{{scheduled_hours.month}}</h1>
+                <small class="text-light"> hours left this month</small>
+            </div>
+            <div class="row">
+                <h1 id="hours-year" class="mb-0">{{scheduled_hours.year}}</h1>
+                <small class="text-light"> hours left this year</small>
+            </div>
+        </div>
     </div>
+    <script>
+        let earnings = new countUp.CountUp('earnings', {{to_date.earnings}}, {prefix: "£", duration: "1"});
+        let hours = new countUp.CountUp('hours', {{elapsed}}, {duration: "1"});
+        hours.start()
+        earnings.start()
 
+        let earningsMonth = new countUp.CountUp('earnings-month', {{scheduled_earnings.month}}, {prefix: "£", duration: "1"});
+        let hoursMonth = new countUp.CountUp('hours-month', {{scheduled_hours.month}}, {duration: "1"});
+        earningsMonth.start()
+        hoursMonth.start()
+
+        let earningsYear = new countUp.CountUp('earnings-year', {{scheduled_earnings.year}}, {prefix: "£", duration: "1"});
+        let hoursYear = new countUp.CountUp('hours-year', {{scheduled_hours.year}}, {duration: "1"});
+        earningsYear.start()
+        hoursYear.start()
+    </script>
 </body>
 </html>
