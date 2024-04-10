@@ -24,7 +24,14 @@ from django.db.models.functions import Cast
 
 @login_required
 def profile(request: HttpRequest):
-    return render(request, "user/profile.html", {"user": request.user}) # type: ignore
+    all_shifts = models.Shift.objects.filter(assigned_to=request.user)
+    today = datetime.datetime.now()
+    scheduled = all_shifts.filter(start_at__range=[today, datetime.datetime.max]).order_by("start_at")
+    
+    if scheduled.count() == 0:
+        return render(request, "user/profile.html", {"user": request.user, "next": None})
+       
+    return render(request, "user/profile.html", {"user": request.user, "next": scheduled.first()}) # type: ignore
 
 def logout(request: HttpRequest):
     auth_logout(request)
@@ -176,6 +183,10 @@ def history(request, period):
 def calculate_earnings(shifts):
     time_elapsed = 0
     earnings = "0"
+    
+    if shifts.count() == 0:
+        return (time_elapsed, earnings)
+    
     aggregate = shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
     time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
     
