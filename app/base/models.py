@@ -26,8 +26,8 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **kwargs)
 
 
-class User(AbstractUser): # Extend default user model
-    username = None # We don't really need usernames, email address is enough.
+class User(AbstractUser):  # Extend default user model
+    username = None  # We don't really need usernames, email address is enough.
     email = models.EmailField(_('email address'), unique=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True)
 
@@ -43,13 +43,16 @@ class User(AbstractUser): # Extend default user model
     def name(self):
         return f"{self.first_name} {self.last_name}"
 
+
 class Shift(models.Model):
-    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_assigned_to', null=True)
-    completed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_completed_by', null=True)
-    role = models.ForeignKey(Role, on_delete=models.CASCADE, null = True)
+    assigned_to = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='user_assigned_to', null=True)
+    completed_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='user_completed_by', null=True)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True)
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
-    wage_multiplier = models.FloatField(default=1) # type: ignore
+    wage_multiplier = models.FloatField(default=1)  # type: ignore
 
     class Meta:
         ordering = ['-start_at', '-end_at']
@@ -57,8 +60,8 @@ class Shift(models.Model):
     def __str__(self):
         return str(self.assigned_to)
 
+
 class ShiftSwapRequest(models.Model):
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
     message = models.CharField(max_length=512)
-    active = models.BooleanField(default=True) # type: ignore
-
+    active = models.BooleanField(default=True)  # type: ignore

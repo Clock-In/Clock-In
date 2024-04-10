@@ -44,7 +44,7 @@ def get_shifts_for_month(
         ])
         week_date += datetime.timedelta(days=7)
 
-    return date.astimezone(datetime.UTC), weeks
+    return date, weeks
 
 def get_shifts_for_week(
         date: datetime.datetime,
@@ -63,7 +63,7 @@ def get_shifts_for_week(
     for shift in shifts:
         start: datetime.datetime = shift.start_at  # type: ignore
         grouped[start.weekday()].append(fmt(shift))
-    return date.astimezone(datetime.UTC), grouped
+    return date, grouped
 
 
 def get_shifts(start_date: datetime.datetime, end_date: datetime.datetime, for_user: typing.Optional[models.User] = None) -> typing.List[models.Shift]:
