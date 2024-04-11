@@ -55,21 +55,15 @@
         
     </style>
 </head>
-<body class="bg-light">
-        {% include 'Navigation_Bar.html' with active="profile" %}
-        <h1><strong>Welcome {{ user.name }}</strong></h1>
-        <h2>Options:</h2>
-        <div class="main">
-            <a class="form-login" href="{% url 'password_change' %}">Change password</a>
-            <a class="form-login" href="{% url 'timetable' %}">My Timetable</a>
-        </div>
-        <div class="main">
-            <a class="form-login" href="{% url 'settings' %}">Settings</a>
-            <a class="form-login" href="{% url 'statistics' %}">Statistics</a>
-        </div>
-        <div class="button">
-            <a class="btn btn-danger btn-lg" href="{% url 'logout' %}">Log out</a>
-        </div>
+<body class="container-fluid p-0 text-center">
+    {% include 'Navigation_Bar.html' with active="profile" %}
+    <h1 class="display-3">Welcome, {{ user.first_name }}.</h1>
+
+    {% if next %}
+    Your next scheduled shift is on <a href="{% url 'my_shift' pk=next.id%}">{{next.start_at.date}}</a> and starts at {{next.start_at.time}} <a href="{% url 'timetable' %}">Full timetable</a>
+    {% endif %}
+    <p class="mt-5"><a href="{% url 'logout' %}" >Log out</a></p> 
+
 </body>
 </html>
 

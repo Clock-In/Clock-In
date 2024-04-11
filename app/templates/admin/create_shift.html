@@ -132,52 +132,53 @@
         }
     </script>
 </head>
-
-<div class="container">
-
-    <div class="week-selector">
-        <button id="week-back" class="btn btn-light" onclick="changeWeek(-1)"><span
-                class="bi bi-chevron-left"></span></button>
-        <span id="start_date"></span>
-        <button class="btn btn-light" id="week-forward" onclick="changeWeek(1)"><span
-                class="bi bi-chevron-right"></span></button>
-    </div>
-    <hr>
-    <div class="timetable-container">
-        {% for day in shifts %}
-        <span class="day-label"></span>
-        {% endfor %}
-        {% for day in shifts %}
-        <div class="day-column">
-            <button class="create-btn btn btn-light">+</button>
-            {% for shift in day %}
-            <span class="shift-listing" onclick="window.location.href = '/shift/{{shift.id}}/edit' ">{{shift.assigned_to}}
-                <script>
-                    document.write(
-                        new Date('{{shift.start_at.isoformat}}').toLocaleTimeString(
-                            navigator.languages, {
-                            hour: '2-digit', minute: '2-digit'
-                        }));
-                </script>
-                -
-                <script>
-                    document.write(
-                        new Date('{{shift.end_at.isoformat}}').toLocaleTimeString(
-                            navigator.languages, {
-                            hour: '2-digit', minute: '2-digit'
-                        }));
-                </script>
-            </span>
+<body>
+    {%include 'Navigation_bar_admin.html' %}
+    <div class="container">
+        <!-- (if does not exist) -->
+        <div class="week-selector">
+            <button id="week-back" class="btn btn-light" onclick="changeWeek(-1)"><span
+                    class="bi bi-chevron-left"></span></button>
+            <span id="start_date"></span>
+            <button class="btn btn-light" id="week-forward" onclick="changeWeek(1)"><span
+                    class="bi bi-chevron-right"></span></button>
+        </div>
+        <hr>
+        <div class="timetable-container">
+            {% for day in shifts %}
+            <span class="day-label"></span>
+            {% endfor %}
+            {% for day in shifts %}
+            <div class="day-column">
+                <button class="create-btn btn btn-light">+</button>
+                {% for shift in day %}
+                <span class="shift-listing" onclick="window.location.href = '/shift/{{shift.id}}/edit' ">{{shift.assigned_to}}
+                    <script>
+                        document.write(
+                            new Date('{{shift.start_at.isoformat}}').toLocaleTimeString(
+                                navigator.languages, {
+                                hour: '2-digit', minute: '2-digit'
+                            }));
+                    </script>
+                    -
+                    <script>
+                        document.write(
+                            new Date('{{shift.end_at.isoformat}}').toLocaleTimeString(
+                                navigator.languages, {
+                                hour: '2-digit', minute: '2-digit'
+                            }));
+                    </script>
+                </span>
+                {% endfor %}
+            </div>
             {% endfor %}
         </div>
-        {% endfor %}
+
+        <hr>
+        <form class="form" method="POST" id="create-form">
+            {% csrf_token %}
+            {{ form }}
+            <input type="submit" value="Create" class="btn btn-dark">
     </div>
 
-    <hr>
-    <form class="form" method="POST" id="create-form">
-        {% csrf_token %}
-        {{ form }}
-        <input type="submit" value="Create" class="btn btn-dark">
-</div>
-
-</form>
+</body>

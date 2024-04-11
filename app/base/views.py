@@ -24,7 +24,14 @@ from django.db.models.functions import Cast
 
 @login_required
 def profile(request: HttpRequest):
-    return render(request, "user/profile.html", {"user": request.user}) # type: ignore
+    all_shifts = models.Shift.objects.filter(assigned_to=request.user)
+    today = datetime.datetime.now()
+    scheduled = all_shifts.filter(start_at__range=[today, datetime.datetime.max]).order_by("start_at")
+    
+    if scheduled.count() == 0:
+        return render(request, "user/profile.html", {"user": request.user, "next": None})
+       
+    return render(request, "user/profile.html", {"user": request.user, "next": scheduled.first()}) # type: ignore
 
 def logout(request: HttpRequest):
     auth_logout(request)
@@ -110,9 +117,9 @@ def create_timetable(request):
     }
     return render(request, 'admin/create_shift.html', ctx)
 
+@login_required
 def distribution(request):
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
-
 
     today = datetime.datetime.now()
     to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
@@ -130,7 +137,8 @@ def distribution(request):
     day_distribution["saturday"] = to_date.filter(start_at__week_day=7).count()
     
     return render(request, 'user/distribution.html', {"days": day_distribution,})
-    
+   
+@login_required 
 def history(request, period):
     today = datetime.datetime.now()
     last_week = today - datetime.timedelta(weeks=1)
@@ -173,9 +181,41 @@ def history(request, period):
         "message": message
     })
     
+    
+def calculate_earnings(shifts):
+    time_elapsed = 0
+    earnings = "0"
+    
+    if shifts.count() == 0:
+        return (time_elapsed, earnings)
+    
+    aggregate = shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
+    time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
+    
+    shifts = shifts.annotate(
+        time_difference=ExpressionWrapper(
+            Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
+            output_field=FloatField()
+        ),
+        multiplied_result=ExpressionWrapper(
+            F('time_difference') * F('wage_multiplier') * Cast(F("assigned_to__role__hourly_rate"), output_field=FloatField()),
+            output_field=FloatField()
+        ),
+    )    
+    
+    shifts = shifts.aggregate(
+        total_sum=Sum('multiplied_result')
+    )
+    
+    if shifts["total_sum"] != None:
+        earnings = "{:.2f}".format(shifts["total_sum"]) 
+        
+    return (time_elapsed, earnings)
+
+@login_required
 def earnings(request):
     if request.user.is_staff:
-        return insights(request)
+        return breakdown(request)
     
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
 
@@ -186,40 +226,32 @@ def earnings(request):
         })
 
     today = datetime.datetime.now()
-    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today])
+    scheduled_shifts = all_shifts.filter(end_at__range=[today, datetime.datetime.max])
     
-    if to_date.count() != 0:
-        aggregate = to_date.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
-        time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
-    else:
-        time_elapsed = 0
-        
-        
-    calculated_to_date = to_date.annotate(
-        time_difference=ExpressionWrapper(
-            Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
-            output_field=FloatField()
-        ),
-        multiplied_result=ExpressionWrapper(
-            F('time_difference') * F('wage_multiplier') * Cast(F("assigned_to__role__hourly_rate"), output_field=FloatField()),
-            output_field=FloatField()
-        ),
-    )
+    (time_elapsed, earnings) = calculate_earnings(to_date)
     
-    earnings_to_date = calculated_to_date.aggregate(
-        total_sum=Sum('multiplied_result')
-    )
+    if scheduled_shifts.count() == 0:
+        return render(request, 'user/earnings.html', {
+            "to_date": {"shifts": to_date, "earnings": earnings },
+            "elapsed":time_elapsed,
+            "scheduled_earnings": {"month": "0", "year": "0"}
+        })
     
-    earnings = "0"
+    scheduled_shifts_month = scheduled_shifts.filter(start_at__range=[today, today.replace(day=1, month=(today.month+1) % 12)])
+    scheduled_shifts_year = scheduled_shifts.filter(start_at__range=[today, datetime.date(today.year+1, 1, 1)])
     
-    if earnings_to_date["total_sum"] != None:
-        earnings = "{:.2f}".format(earnings_to_date["total_sum"])          
-        
-    print(earnings)
+    scheduled_earnings = {}
+    scheduled_hours = {}
+    (scheduled_hours["month"],scheduled_earnings["month"]) = calculate_earnings(scheduled_shifts_month)
+    (scheduled_hours["year"], scheduled_earnings["year"]) = calculate_earnings(scheduled_shifts_year)
+
     return render(request, 'user/earnings.html', {
         "to_date": {"shifts": to_date, "earnings": earnings },
-        "elapsed":time_elapsed
-    })    
+        "elapsed":time_elapsed,
+        "scheduled_earnings": scheduled_earnings,
+        "scheduled_hours": scheduled_hours
+    })
 
 @login_required
 def shift_swap_request(request, pk):
@@ -271,49 +303,13 @@ def view_shift_requests(request):
             "form": form,
         }
     )
-
-@manager_only
-def insights(request):
-    all_workers = models.User.objects.filter(is_staff=False)
-    worker_distribution = []
-    for worker in all_workers:
-        worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
-
-        if worker_shifts.count() == 0:
-            continue
-
-        worker_info = {}
-        worker_info["name"] = worker.name
-        worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
-        worker_info["saturday"] = worker_shifts.filter(start_at__week_day=7).count()
-        
-        time_elapsed = worker_shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
-        time_elapsed = time_elapsed["time_elapsed"] / datetime.timedelta(hours=1)
-        
-        worker_info["total"] = time_elapsed
-        worker_distribution.append(worker_info)
-        
-    weekend_fairness = {}
-    weekend_fairness["workers"] = []
-    for worker in worker_distribution:
-        weekend_fairness["workers"].append({"name": worker["name"], "score":worker["saturday"] + worker["sunday"] * 1.5})
     
-    weekend_fairness["mean"] = 0
-    weekend_fairness["stdev"] = 0
-
-    if len(weekend_fairness["workers"]) == 0:
-        return render(request, "user/insights.html", {"weekend_fairness": weekend_fairness})
-    
-    weekend_fairness["mean"] = mean([w["score"] for w in weekend_fairness["workers"]])
-    if len(weekend_fairness["workers"]) > 1:
-        weekend_fairness["stdev"] = stdev([w["score"] for w in weekend_fairness["workers"]])
-
-    return render(request, "user/insights.html", {"weekend_fairness": weekend_fairness})
-
+@login_required
 @manager_only
 def breakdown(request):
     all_workers = models.User.objects.filter(is_staff=False)
-    worker_distribution = []
+    worker_distribution = []       
+
     for worker in all_workers:
         worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
 
@@ -323,17 +319,40 @@ def breakdown(request):
         worker_info = {}
         worker_info["name"] = worker.name
         worker_info["shift_count"] = worker_shifts.count()
+        worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
+        worker_info["saturday"] = worker_shifts.filter(start_at__week_day=7).count()
         
         time_elapsed = worker_shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
         time_elapsed = time_elapsed["time_elapsed"] / datetime.timedelta(hours=1)
         
         worker_info["total"] = time_elapsed
+        worker_info["score"] = worker_info["saturday"] + worker_info["sunday"] * 1.5
+    
         worker_distribution.append(worker_info)
     
+    max_score = 0
+    max_worker = ""
+    max_hours = 0
+    max_hours_worker = ""
+
+    for worker in worker_distribution:
+        if worker["score"] > max_score:
+            max_score = worker["score"]
+            max_worker = worker["name"]
+        if worker["total"] > max_hours:
+            max_hours = worker["total"]
+            max_hours_worker = worker["name"]
+            
+        
+        
     return render(request, "user/breakdown.html", {
         "employee_count": all_workers.count(),
         "worker_distribution": worker_distribution,
+        "max_worker": max_worker,
+        "max_hours_worker": max_hours_worker
     })
+    
+
 
 class CustomLoginView(LoginView):
     form_class = LoginForm

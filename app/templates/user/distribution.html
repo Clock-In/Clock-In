@@ -83,10 +83,18 @@
         .data(data)
         .join("rect")
         .attr("x", d => x(d.day))
-        .attr("y", d => y(d.value))
+        .attr("y", d => y(0))
         .attr("width", x.bandwidth())
-        .attr("height", d => height - y(d.value))
+        .attr("height", d => height - y(0))
         .attr("fill", "#69b3a2")
+
+        svg.selectAll("rect")
+        .transition()
+        .duration(800)
+        .attr("y", d => y(d.value))
+        .attr("height", d => height - y(d.value))
+        .delay((d,i) => i*100)
+
     </script>
     {% endif %}
 </body>

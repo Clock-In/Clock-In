@@ -56,7 +56,6 @@ statistic_urls = [
     path("distribution", views.distribution, name="distribution"),
     path("history/<str:period>", views.history, name="history"),
     path("earnings", views.earnings, name="earnings"),
-    path("insights", views.insights, name="insights"),
     path("breakdown", views.breakdown, name="breakdown"),
 ]
 

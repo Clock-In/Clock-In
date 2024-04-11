@@ -12,7 +12,8 @@
     {% include 'user/stats_navbar.html' with active="history" %}
 
     <div class="container-fluid p-3">
-        <h3>{{message}} <span class="text-muted">£{{earnings}}</span></h3>
+        <h1>{{message}} <span class="text-muted">£{{earnings}}</span></h1>
+        {% if shifts|length != 0%}
         <div class="list-group h-75" style="overflow-y: auto;">
         {% for s in shifts %}
             <div class="list-group-item">
@@ -25,6 +26,9 @@
                 </footer>
             </div>
         {% endfor %}
+        {% else %}
+            <h1 class="text-muted mt-5">Nothing to show...</h1>
+        {% endif %}
         </div>
     </div>
 
