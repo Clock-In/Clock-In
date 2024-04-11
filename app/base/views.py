@@ -222,7 +222,8 @@ def earnings(request):
     if all_shifts.count() == 0:
         return render(request, 'user/earnings.html', {
             "to_date": {"shifts": all_shifts, "earnings": "0" },
-            "elapsed":0
+            "elapsed":0,
+            "scheduled_earnings": {"month": "0", "year": "0"}
         })
 
     today = datetime.datetime.now()
@@ -235,7 +236,8 @@ def earnings(request):
         return render(request, 'user/earnings.html', {
             "to_date": {"shifts": to_date, "earnings": earnings },
             "elapsed":time_elapsed,
-            "scheduled_earnings": {"month": "0", "year": "0"}
+            "scheduled_earnings": {"month": "0", "year": "0"},
+            "scheduled_hours": {"month": "0", "year": "0"}
         })
     
     scheduled_shifts_month = scheduled_shifts.filter(start_at__range=[today, today.replace(day=1, month=(today.month+1) % 12)])
