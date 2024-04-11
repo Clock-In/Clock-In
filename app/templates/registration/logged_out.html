@@ -1,2 +1,61 @@
-<h1>You have successfully logged out.</h1>
-<a href="{% url 'login' %}">Log in</a>
+<style>
+    .login-container {
+        background-color: white;
+		align-items: center;
+    }
+
+    .headers {
+        font-family: "Halvetica Neue", "Halvetica", "Arial", "sans-serif";
+        color: #102a43;
+        font-weight: bold;
+        font-size: 25px;
+        text-align: center;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+
+    .form-login {
+        background: white;
+        width: 400px;
+        padding: 20px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+		justify-content: center;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+		text-align: center;
+    }
+
+    .button {
+        background-color: #4c7ef3;
+        color: white;
+        padding: 5px 30px;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        width: 40%;
+        margin-top: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		transition-duration: 0.4s;
+		cursor: pointer;
+    }
+	
+	.button:hover {
+		background-color: #0d43bf;
+		color: white;
+    }
+
+</style>
+<div class="login-container">
+	<body class="form-login">
+		<h1 class="headers">You have been successfully logged out.</h1>
+		<a href="{% url 'login' %}">
+			<button class="button">Login</button>
+		</a>
+	</body>
+</div>

@@ -48,6 +48,8 @@
         width: 40%;
         margin-top: 5px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		transition-duration: 0.4s;
+		cursor: pointer;
     }
 
     .paragraphs {
@@ -61,11 +63,22 @@
     }
 
     .error-message {
+        font-family: "Halvetica Neue", "Halvetica", "Arial", "sans-serif";
         text-align: center;
         background-color: pink;
         border: .1rem solid red;
         border-radius: 1rem;
         padding: 1rem;
+    }
+
+    .lost {
+        font-family: "Halvetica Neue", "Halvetica", "Arial", "sans-serif";
+        font-size: 14px;
+    }
+	
+	.button-submit:hover {
+		background-color: #0d43bf;
+		color: white;
     }
 
 </style>
@@ -101,6 +114,6 @@
         {{ form.password }}
         <button type="submit" class="button-submit">Log in</button>
         <input type="hidden" name="next" value="{{ next }}">
-        <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+        <p><a class="lost" href="{% url 'password_reset' %}">Forgot password?</a></p>
     </form>
 </div>
