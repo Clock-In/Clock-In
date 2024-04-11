@@ -12,18 +12,18 @@
     <style>
         .main {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2em;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1em;
             align-items: center;
             text-align: center;
-            justify-content: center;
+            justify-content: space-around;
             margin-bottom: 3em;
         }
 
         .form-login {
             background: white;
             width: 90%;
-            max-width: 400px;
+            max-width: 600px;
             padding: 60px;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
             border-radius: 10px;
@@ -32,7 +32,7 @@
             justify-content: space-between;
             margin: 0 auto;
             margin-top: 2rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
             font-size: 20px;
             text-align: center;
          }
@@ -42,12 +42,22 @@
             text-align: center;
          }
 
+         h1 {
+            font-size: 45px !important;
+         }
+
+         .button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+         }
+
         
     </style>
 </head>
 <body class="bg-light">
         {% include 'Navigation_Bar.html' with active="profile" %}
-        <h1>Welcome {{ user.name }}</h1>
+        <h1><strong>Welcome {{ user.name }}</strong></h1>
         <h2>Options:</h2>
         <div class="main">
             <a class="form-login" href="{% url 'password_change' %}">Change password</a>
@@ -57,7 +67,9 @@
             <a class="form-login" href="{% url 'settings' %}">Settings</a>
             <a class="form-login" href="{% url 'statistics' %}">Statistics</a>
         </div>
-        <a class="btn btn-danger" href="{% url 'logout' %}">Log out</a>
+        <div class="button">
+            <a class="btn btn-danger btn-lg" href="{% url 'logout' %}">Log out</a>
+        </div>
 </body>
 </html>
 
