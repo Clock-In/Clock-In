@@ -24,7 +24,7 @@
         .main-title {
             margin-top: 20px;
             margin-bottom: 60px !important;
-            font-size: 50px;
+            font-size: 40px;
             text-decoration: none;
             color: black !important;
         }
@@ -37,7 +37,6 @@
 
         h1 {
             color: #2b23a4 !important;
-            text-decoration: underline;
         }
 
         h2 {
@@ -73,8 +72,9 @@
         <hr>
         <h1><strong>Shift ends: </strong></h1>
         <h2>{{shift.end_at}}</h2>
+        <hr>
         <a class="btn btn-primary" href="{% url 'swap_request' pk=shift.id%}">Swap shift</a>
-        <a href="{% url 'timetable' %}">Full timetable</a>
+        <a class="btn btn-danger" href="{% url 'timetable' %}">Back to timetable</a>
     </main>
 </body>
 
