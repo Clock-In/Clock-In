@@ -3,7 +3,9 @@ from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.views import LoginView
 from django.http import HttpRequest
 from django.http.request import QueryDict
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+
+
 import datetime
 from statistics import mean, stdev
 
@@ -22,7 +24,14 @@ from django.db.models.functions import Cast
 
 @login_required
 def profile(request: HttpRequest):
-    return render(request, "user/profile.html", {"user": request.user}) # type: ignore
+    all_shifts = models.Shift.objects.filter(assigned_to=request.user)
+    today = datetime.datetime.now()
+    scheduled = all_shifts.filter(start_at__range=[today, datetime.datetime.max]).order_by("start_at")
+    
+    if scheduled.count() == 0:
+        return render(request, "user/profile.html", {"user": request.user, "next": None})
+       
+    return render(request, "user/profile.html", {"user": request.user, "next": scheduled.first()}) # type: ignore
 
 def logout(request: HttpRequest):
     auth_logout(request)
@@ -108,10 +117,15 @@ def create_timetable(request):
     }
     return render(request, 'admin/create_shift.html', ctx)
 
+@login_required
 def distribution(request):
-    today = datetime.datetime.now()
     all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
+
+    today = datetime.datetime.now()
     to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+    
+    if to_date.count() == 0:
+        return render(request, 'user/distribution.html', {"empty": True})
     
     day_distribution = {}
     day_distribution["sunday"] = to_date.filter(start_at__week_day=1).count()
@@ -123,7 +137,8 @@ def distribution(request):
     day_distribution["saturday"] = to_date.filter(start_at__week_day=7).count()
     
     return render(request, 'user/distribution.html', {"days": day_distribution,})
-    
+   
+@login_required 
 def history(request, period):
     today = datetime.datetime.now()
     last_week = today - datetime.timedelta(weeks=1)
@@ -166,22 +181,18 @@ def history(request, period):
         "message": message
     })
     
-def earnings(request):
-    if request.user.is_staff:
-        return insights(request)
     
-    today = datetime.datetime.now()
-    all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
-    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today]).order_by("-start_at", )
+def calculate_earnings(shifts):
+    time_elapsed = 0
+    earnings = "0"
     
-    if to_date.count() != 0:
-        aggregate = to_date.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
-        time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
-    else:
-        time_elapsed = 0
-        
-        
-    calculated_to_date = to_date.annotate(
+    if shifts.count() == 0:
+        return (time_elapsed, earnings)
+    
+    aggregate = shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
+    time_elapsed = aggregate["time_elapsed"] / datetime.timedelta(hours=1)
+    
+    shifts = shifts.annotate(
         time_difference=ExpressionWrapper(
             Cast(F('end_at') - F('start_at'), output_field=FloatField()) / 3600000000, #convert to hours
             output_field=FloatField()
@@ -190,22 +201,59 @@ def earnings(request):
             F('time_difference') * F('wage_multiplier') * Cast(F("assigned_to__role__hourly_rate"), output_field=FloatField()),
             output_field=FloatField()
         ),
-    )
+    )    
     
-    earnings_to_date = calculated_to_date.aggregate(
+    shifts = shifts.aggregate(
         total_sum=Sum('multiplied_result')
     )
     
-    earnings = "0"
-    
-    if earnings_to_date["total_sum"] != None:
-        earnings = "{:.2f}".format(earnings_to_date["total_sum"])          
+    if shifts["total_sum"] != None:
+        earnings = "{:.2f}".format(shifts["total_sum"]) 
         
-    print(earnings)
+    return (time_elapsed, earnings)
+
+@login_required
+def earnings(request):
+    if request.user.is_staff:
+        return breakdown(request)
+    
+    all_shifts = models.Shift.objects.filter(assigned_to=request.user).order_by("start_at")
+
+    if all_shifts.count() == 0:
+        return render(request, 'user/earnings.html', {
+            "to_date": {"shifts": all_shifts, "earnings": "0" },
+            "elapsed":0,
+            "scheduled_earnings": {"month": "0", "year": "0"}
+        })
+
+    today = datetime.datetime.now()
+    to_date = all_shifts.filter(end_at__range=[datetime.datetime.min, today])
+    scheduled_shifts = all_shifts.filter(end_at__range=[today, datetime.datetime.max])
+    
+    (time_elapsed, earnings) = calculate_earnings(to_date)
+    
+    if scheduled_shifts.count() == 0:
+        return render(request, 'user/earnings.html', {
+            "to_date": {"shifts": to_date, "earnings": earnings },
+            "elapsed":time_elapsed,
+            "scheduled_earnings": {"month": "0", "year": "0"},
+            "scheduled_hours": {"month": "0", "year": "0"}
+        })
+    
+    scheduled_shifts_month = scheduled_shifts.filter(start_at__range=[today, today.replace(day=1, month=(today.month+1) % 12)])
+    scheduled_shifts_year = scheduled_shifts.filter(start_at__range=[today, datetime.date(today.year+1, 1, 1)])
+    
+    scheduled_earnings = {}
+    scheduled_hours = {}
+    (scheduled_hours["month"],scheduled_earnings["month"]) = calculate_earnings(scheduled_shifts_month)
+    (scheduled_hours["year"], scheduled_earnings["year"]) = calculate_earnings(scheduled_shifts_year)
+
     return render(request, 'user/earnings.html', {
         "to_date": {"shifts": to_date, "earnings": earnings },
-        "elapsed":time_elapsed
-    })    
+        "elapsed":time_elapsed,
+        "scheduled_earnings": scheduled_earnings,
+        "scheduled_hours": scheduled_hours
+    })
 
 @login_required
 def shift_swap_request(request, pk):
@@ -236,7 +284,7 @@ def view_shift_requests(request):
         if form.is_valid():
             req: models.ShiftSwapRequest = form.cleaned_data["request"] # type: ignore
             shift: models.Shift = req.shift # type: ignore
-            if shift.role == request.user.role and shift.start_at > datetime.datetime.now().astimezone():
+            if shift.role == request.user.role and shift.start_at > datetime.datetime.now():
                 req.active = False
                 req.save()
                 shift.completed_by = request.user
@@ -257,15 +305,22 @@ def view_shift_requests(request):
             "form": form,
         }
     )
-
+    
+@login_required
 @manager_only
-def insights(request):
+def breakdown(request):
     all_workers = models.User.objects.filter(is_staff=False)
-    worker_distribution = []
+    worker_distribution = []       
+
     for worker in all_workers:
         worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
+
+        if worker_shifts.count() == 0:
+            continue
+
         worker_info = {}
         worker_info["name"] = worker.name
+        worker_info["shift_count"] = worker_shifts.count()
         worker_info["sunday"] = worker_shifts.filter(start_at__week_day=1).count()
         worker_info["saturday"] = worker_shifts.filter(start_at__week_day=7).count()
         
@@ -273,40 +328,62 @@ def insights(request):
         time_elapsed = time_elapsed["time_elapsed"] / datetime.timedelta(hours=1)
         
         worker_info["total"] = time_elapsed
-        worker_distribution.append(worker_info)
-        
-    weekend_fairness = {}
-    weekend_fairness["workers"] = []
-    for worker in worker_distribution:
-        weekend_fairness["workers"].append({"name": worker["name"], "score":worker["saturday"] + worker["sunday"] * 1.5})
+        worker_info["score"] = worker_info["saturday"] + worker_info["sunday"] * 1.5
     
-    weekend_fairness["mean"] = mean([w["score"] for w in weekend_fairness["workers"]])
-    if len(weekend_fairness["workers"]) > 1:
-        weekend_fairness["stdev"] = stdev([w["score"] for w in weekend_fairness["workers"]])
-    else:
-        weekend_fairness["stdev"] = 0
-    return render(request, "user/insights.html", {"weekend_fairness": weekend_fairness})
+        worker_distribution.append(worker_info)
+    
+    max_score = 0
+    max_worker = ""
+    max_hours = 0
+    max_hours_worker = ""
 
-@manager_only
-def breakdown(request):
-    all_workers = models.User.objects.filter(is_staff=False)
-    worker_distribution = []
-    for worker in all_workers:
-        worker_shifts = models.Shift.objects.filter(assigned_to=worker.id, end_at__range=[datetime.datetime.min, datetime.datetime.now()])
-        worker_info = {}
-        worker_info["name"] = worker.name
-        worker_info["shift_count"] = worker_shifts.count()
+    for worker in worker_distribution:
+        if worker["score"] > max_score:
+            max_score = worker["score"]
+            max_worker = worker["name"]
+        if worker["total"] > max_hours:
+            max_hours = worker["total"]
+            max_hours_worker = worker["name"]
+            
         
-        time_elapsed = worker_shifts.aggregate(time_elapsed=Sum(F("end_at") - F("start_at")))
-        time_elapsed = time_elapsed["time_elapsed"] / datetime.timedelta(hours=1)
         
-        worker_info["total"] = time_elapsed
-        worker_distribution.append(worker_info)
-    
     return render(request, "user/breakdown.html", {
         "employee_count": all_workers.count(),
         "worker_distribution": worker_distribution,
+        "max_worker": max_worker,
+        "max_hours_worker": max_hours_worker
     })
+    
+
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
+
+
+@login_required
+@manager_only
+def delete_shift(request, pk):
+    shift = get_object_or_404(models.Shift, pk=pk)
+    if request.method == 'POST':
+        shift.delete()
+        return redirect('/timetable/create')  # Redirect to the timetable page after deletion
+    return render(request, 'shift/delete.html', {'shift': shift})
+
+@login_required
+@manager_only
+def edit_shift(request, pk):
+    shift = get_object_or_404(models.Shift, pk=pk)
+    form = ShiftCreationForm(instance=shift)
+    if request.method == 'POST':
+        form = ShiftCreationForm(request.POST, instance=shift)
+        if form.is_valid():
+            form.save()
+            return redirect('/timetable/create')  # Redirect to the timetable page after editing
+    return render(request, 'admin/edit_shift.html', {'form': form, 'shift': shift})
+
+def index(request):
+    if request.user.is_authenticated:
+        return redirect('/accounts/profile/')
+    else:
+        return redirect('/accounts/login/')
+

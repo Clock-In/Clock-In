@@ -56,7 +56,6 @@ statistic_urls = [
     path("distribution", views.distribution, name="distribution"),
     path("history/<str:period>", views.history, name="history"),
     path("earnings", views.earnings, name="earnings"),
-    path("insights", views.insights, name="insights"),
     path("breakdown", views.breakdown, name="breakdown"),
 ]
 
@@ -70,4 +69,9 @@ urlpatterns = [
     path('statistics/', include(statistic_urls)),
     path('shift/<str:pk>/swap/', views.shift_swap_request, name="swap_request"),
     path('shift/available/', views.view_shift_requests, name="view_requests"),
+    path('shift/<int:pk>/delete/', views.delete_shift, name='delete_shift'),
+    path('shift/<int:pk>/edit/', views.edit_shift, name='edit_shift'),
+    path('', views.index, name='index')
 ]
+
+

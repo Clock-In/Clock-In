@@ -1,4 +1,7 @@
 <head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         .swap-list {
             width: 100%;
@@ -10,11 +13,13 @@
         }
 
         .swap-list td {
-            text-align: center;
         }
 
         #accept-form {
             display: none;
+        }
+        .container {
+            margin: 1rem;
         }
 
     </style>
@@ -22,7 +27,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             Array.from(document.getElementsByClassName('accept-btn')).forEach(btn => {
                 btn.addEventListener('click', evt => {
-                    const { reqid } = btn.dataset;
+                    const {reqid} = btn.dataset;
                     document.getElementById('id_request').value = reqid
                     document.getElementById('accept-form').submit();
                 });
@@ -32,30 +37,40 @@
 
 
 </head>
-{% if num_requests %}
-There are {{num_requests}} shifts available:
-<table class="swap-list">
-    <tr>
-        <th>Start</th>
-        <th>End</th>
-        <th>Requested by</th>
-        <th>Message</th>
-        <th>Actions</th>
-    </tr>
-    {% for req in requests %}
-    <tr>
-        <td>{{req.shift.start_at}}</td>
-        <td>{{req.shift.end_at}}</td>
-        <td>{{req.shift.assigned_to}}</td>
-        <td>{{req.message}}</td>
-        <td><button class="accept-btn" data-reqid="{{req.id}}">Accept</button></td>
-    </tr>
-    {% endfor %}
-</table>
-<form method="POST" id="accept-form">
-    {% csrf_token %}
-    {{form}}
-</form>
-{% else %}
-There aren't any shifts available currently.
-{% endif %}
+
+<body>
+        {% include 'Navigation_Bar.html' with active="view_requests" %}
+    <div class="container">
+        {% if num_requests %}
+        {% if num_requests > 1 %}
+        <h2>There are {{num_requests}} shifts available:</h2>
+        {% else %}
+        <h2>There is 1 shift available:</h2>
+        {% endif %}
+        <table class="swap-list">
+            <tr>
+                <th>Start</th>
+                <th>End</th>
+                <th>Requested by</th>
+                <th>Message</th>
+                <th>Actions</th>
+            </tr>
+            {% for req in requests %}
+            <tr>
+                <td>{{req.shift.start_at}}</td>
+                <td>{{req.shift.end_at}}</td>
+                <td>{{req.shift.assigned_to}}</td>
+                <td>{{req.message}}</td>
+                <td><button class="accept-btn btn btn-dark" data-reqid="{{req.id}}">Accept</button></td>
+            </tr>
+            {% endfor %}
+        </table>
+        <form method="POST" id="accept-form">
+            {% csrf_token %}
+            {{form}}
+        </form>
+        {% else %}
+        There aren't any shifts available currently.
+        {% endif %}
+    </div>
+</body>
