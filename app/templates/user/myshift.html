@@ -65,7 +65,9 @@
         <hr>
         <h1><strong>Shift ends: </strong></h1>
         <h2>{{shift.end_at}}</h2>
+        <hr>
         <a class="btn btn-primary" href="/shift/{{shift.id}}/swap">Swap shift</a>
+        <a class="btn btn-danger" href="{% url 'timetable' %}">Back to timetable</a>
     </main>
 </body>
 </html>
