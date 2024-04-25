@@ -76,7 +76,7 @@
             month: 'short',
             day: 'numeric',
         };
-        const baseDate = new Date('{{ start_date.isoformat }}');
+        const baseDate = new Date('{{ start_date.isoformat }}Z');
         window.addEventListener('DOMContentLoaded', () => {
             const start_at_input = document.getElementById('id_start_at');
             const end_at_input = document.getElementById('id_end_at');

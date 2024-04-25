@@ -110,7 +110,7 @@
     </style>
 
     <script>
-        const baseDate = new Date('{{ start_date.isoformat }}');
+        const baseDate = new Date('{{ start_date.isoformat }}Z');
         const dateFmtOpts = {
             weekday: 'short',
             year: 'numeric',
@@ -119,7 +119,7 @@
         };
         function changeWeek(direction) {
             const query = new URLSearchParams(window.location.search);
-            baseDate.setDate(baseDate.getDate() + (7 * direction));
+            baseDate.setUTCDate(baseDate.getUTCDate() + (7 * direction));
             query.set('week_start', Math.floor(baseDate.getTime() / 1000));
             window.location.search = query.toString();
         }
